@@ -1,0 +1,922 @@
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const QRCode = require('qrcode');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+
+// Simple logging function
+function log(level, message, data = null) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+  console.log(logEntry);
+  if (data) {
+    console.log('Data:', JSON.stringify(data, null, 2));
+  }
+}
+
+const { validateEmployeeData, sanitizeEmployeeData } = require('./validationUtils');
+
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+
+// Create uploads directory
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
+
+// Database setup
+const db = new sqlite3.Database('idsyncro.db');
+
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS employees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid TEXT UNIQUE,
+    employee_id TEXT UNIQUE,
+    name TEXT NOT NULL,
+    designation TEXT NOT NULL,
+    department TEXT NOT NULL,
+    type TEXT NOT NULL,
+    employment_type TEXT DEFAULT 'full_time',
+    work_location TEXT,
+    photo TEXT,
+    qr_code TEXT,
+    email TEXT,
+    phone TEXT,
+    address TEXT,
+    emergency_contact TEXT,
+    emergency_phone TEXT,
+    date_of_birth TEXT,
+    joining_date TEXT,
+    salary TEXT,
+    bank_account TEXT,
+    aadhar_number TEXT,
+    pan_number TEXT,
+    blood_group TEXT,
+    manager TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'active'
+  )`);
+  
+  // Create counter table for ID generation
+  db.run(`CREATE TABLE IF NOT EXISTS id_counters (
+    type TEXT PRIMARY KEY,
+    year TEXT,
+    counter INTEGER DEFAULT 0
+  )`);
+  
+  // Add new columns to existing table if they don't exist
+  const newColumns = [
+    'email TEXT',
+    'phone TEXT', 
+    'address TEXT',
+    'emergency_contact TEXT',
+    'emergency_phone TEXT',
+    'date_of_birth TEXT',
+    'joining_date TEXT',
+    'salary TEXT',
+    'bank_account TEXT',
+    'aadhar_number TEXT',
+    'pan_number TEXT',
+    'blood_group TEXT',
+    'manager TEXT',
+    'employment_type TEXT DEFAULT "full_time"',
+    'work_location TEXT'
+  ];
+  
+  newColumns.forEach(column => {
+    db.run(`ALTER TABLE employees ADD COLUMN ${column}`, (err) => {
+      // Ignore error if column already exists
+    });
+  });
+  
+  // Create indexes for better performance
+  db.run('CREATE INDEX IF NOT EXISTS idx_employee_id ON employees(employee_id)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_type ON employees(type)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_status ON employees(status)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_department ON employees(department)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_name ON employees(name)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_created_at ON employees(created_at)');
+  
+  // Initialize counters atomically to prevent race conditions
+  const year = new Date().getFullYear().toString().slice(-2);
+  
+  db.serialize(() => {
+    db.run('BEGIN IMMEDIATE TRANSACTION');
+    
+    // Get max employee ID
+    db.get(`SELECT MAX(CAST(SUBSTR(employee_id, -4) AS INTEGER)) as max_num FROM employees WHERE type = 'employee' AND employee_id LIKE 'SWT-${year}-EMP-%'`, (err, empRow) => {
+      if (err) {
+        db.run('ROLLBACK');
+        return;
+      }
+      
+      // Get max intern ID
+      db.get(`SELECT MAX(CAST(SUBSTR(employee_id, -4) AS INTEGER)) as max_num FROM employees WHERE type = 'intern' AND employee_id LIKE 'SWT-${year}-INT-%'`, (err2, intRow) => {
+        if (err2) {
+          db.run('ROLLBACK');
+          return;
+        }
+        
+        const empMax = empRow?.max_num || 0;
+        const intMax = intRow?.max_num || 0;
+        
+        // Insert counters atomically
+        db.run('INSERT OR IGNORE INTO id_counters (type, year, counter) VALUES (?, ?, ?)', ['employee', year, empMax]);
+        db.run('INSERT OR IGNORE INTO id_counters (type, year, counter) VALUES (?, ?, ?)', ['intern', year, intMax]);
+        db.run('COMMIT');
+      });
+    });
+  });
+});
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+// Generate ID number using counter table
+function generateIdNumber(type) {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const typeCode = type === 'employee' ? 'EMP' : 'INT';
+  
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run('BEGIN IMMEDIATE TRANSACTION', (err) => {
+        if (err) {
+          reject(new Error('Failed to start transaction: ' + err.message));
+          return;
+        }
+        
+        // Find the highest existing ID for this type and year
+        db.get(
+          `SELECT MAX(CAST(SUBSTR(employee_id, -4) AS INTEGER)) as max_num 
+           FROM employees 
+           WHERE type = ? AND employee_id LIKE ?`,
+          [type, `SWT-${year}-${typeCode}-%`],
+          (err, row) => {
+            if (err) {
+              db.run('ROLLBACK');
+              reject(new Error('Failed to query existing IDs: ' + err.message));
+              return;
+            }
+            
+            const nextNumber = (row && row.max_num ? row.max_num : 0) + 1;
+            if (nextNumber > 9999) {
+              db.run('ROLLBACK');
+              reject(new Error('Maximum ID limit (9999) reached for this year'));
+              return;
+            }
+            
+            const newId = `SWT-${year}-${typeCode}-${nextNumber.toString().padStart(4, '0')}`;
+            
+            // Update counter and commit
+            db.run(
+              'INSERT OR REPLACE INTO id_counters (type, year, counter) VALUES (?, ?, ?)',
+              [type, year, nextNumber],
+              (err2) => {
+                if (err2) {
+                  db.run('ROLLBACK');
+                  reject(new Error('Failed to update counter: ' + err2.message));
+                  return;
+                }
+                
+                db.run('COMMIT', (commitErr) => {
+                  if (commitErr) {
+                    reject(new Error('Failed to commit transaction: ' + commitErr.message));
+                  } else {
+                    resolve(newId);
+                  }
+                });
+              }
+            );
+          }
+        );
+      });
+    });
+  });
+}
+
+// Generate QR Code
+async function generateQRCode(employeeId, uuid) {
+  const verifyUrl = `http://localhost:3000/verify/${uuid}`;
+  const qrCodeDataUrl = await QRCode.toDataURL(verifyUrl, {
+    width: 200,
+    margin: 2,
+    color: {
+      dark: '#000000',
+      light: '#FFFFFF'
+    }
+  });
+  return qrCodeDataUrl;
+}
+
+// Routes
+app.post('/api/employees', (req, res) => {
+  upload.single('photo')(req, res, async (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File too large. Maximum size is 5MB.' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    
+    try {
+    const { 
+      name, designation, department, type, employment_type, work_location, email, phone, address,
+      emergency_contact, emergency_phone, date_of_birth, joining_date,
+      salary, bank_account, aadhar_number, pan_number, blood_group, manager
+    } = req.body;
+
+    // Sanitize input data
+    const sanitizedData = sanitizeEmployeeData({
+      name, designation, department, type, employment_type, work_location, email, phone, address,
+      emergency_contact, emergency_phone, date_of_birth, joining_date,
+      salary, bank_account, aadhar_number, pan_number, blood_group, manager
+    });
+
+    // Validate employee data
+    const validation = validateEmployeeData(sanitizedData);
+    if (!validation.valid) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        errors: validation.errors 
+      });
+    }
+
+    const uuid = uuidv4();
+    const employeeId = await generateIdNumber(type);
+    
+    const photo = req.file ? req.file.filename : null;
+    const qrCode = await generateQRCode(employeeId, uuid);
+
+    db.run(
+      `INSERT INTO employees (
+        uuid, employee_id, name, designation, department, type, employment_type, work_location, photo, qr_code,
+        email, phone, address, emergency_contact, emergency_phone, date_of_birth,
+        joining_date, salary, bank_account, aadhar_number, pan_number, blood_group, manager, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        uuid, employeeId, sanitizedData.name, sanitizedData.designation, sanitizedData.department, 
+        sanitizedData.type, sanitizedData.employment_type, sanitizedData.work_location, photo, qrCode,
+        sanitizedData.email, sanitizedData.phone, sanitizedData.address, sanitizedData.emergency_contact, 
+        sanitizedData.emergency_phone, sanitizedData.date_of_birth,
+        sanitizedData.joining_date, sanitizedData.salary, sanitizedData.bank_account, sanitizedData.aadhar_number, 
+        sanitizedData.pan_number, sanitizedData.blood_group, sanitizedData.manager
+      ],
+      function(err) {
+        if (err) {
+          if (err.message.includes('UNIQUE constraint failed')) {
+            return res.status(409).json({ 
+              error: 'Employee ID conflict. Please try again.',
+              details: 'A unique constraint violation occurred. The system will generate a new ID on retry.'
+            });
+          }
+          return res.status(500).json({ error: err.message });
+        }
+        log('info', 'Employee created successfully', { id: this.lastID, employeeId, name: sanitizedData.name });
+        res.json({
+          id: this.lastID,
+          uuid,
+          employeeId,
+          message: 'Employee created successfully'
+        });
+      }
+    );
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+});
+
+app.get('/api/employees', (req, res) => {
+  db.all('SELECT * FROM employees ORDER BY created_at DESC', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+app.get('/api/employees/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid employee ID' });
+  }
+  
+  db.get('SELECT * FROM employees WHERE id = ?', [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (!row) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    res.json(row);
+  });
+});
+
+app.delete('/api/employees/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid employee ID' });
+  }
+  
+  db.run('DELETE FROM employees WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    res.json({ message: 'Employee deleted successfully' });
+  });
+});
+
+app.put('/api/employees/:id', upload.single('photo'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'Invalid employee ID' });
+    }
+    
+    const { 
+      name, designation, department, type, employment_type, work_location, status, email, phone, address,
+      emergency_contact, emergency_phone, date_of_birth, joining_date,
+      salary, bank_account, aadhar_number, pan_number, blood_group, manager, existingPhoto
+    } = req.body;
+
+    // Get current employee data first
+    db.get('SELECT * FROM employees WHERE id = ?', [id], async (err, employee) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (!employee) {
+        return res.status(404).json({ error: 'Employee not found' });
+      }
+
+      try {
+        // Sanitize input data
+        const sanitizedData = sanitizeEmployeeData({
+          name, designation, department, type, employment_type, work_location, status, email, phone, address,
+          emergency_contact, emergency_phone, date_of_birth, joining_date,
+          salary, bank_account, aadhar_number, pan_number, blood_group, manager
+        });
+
+        // Validate employee data (skip validation for optional fields that are empty)
+        const validation = validateEmployeeData(sanitizedData);
+        if (!validation.valid) {
+          return res.status(400).json({ 
+            error: 'Validation failed', 
+            errors: validation.errors 
+          });
+        }
+
+        // Handle photo: new file > existing photo > current photo
+        let photo = employee.photo; // Default to current photo
+        if (req.file) {
+          photo = req.file.filename; // New photo uploaded
+        } else if (existingPhoto) {
+          photo = existingPhoto; // Keep existing photo
+        }
+
+        // Generate new ID if type changed
+        let employeeId = employee.employee_id;
+        if (sanitizedData.type !== employee.type) {
+          employeeId = await generateIdNumber(sanitizedData.type);
+        }
+
+        // Generate new QR code
+        const qrCode = await generateQRCode(employeeId, employee.uuid);
+
+        db.run(
+          `UPDATE employees SET 
+            name = ?, designation = ?, department = ?, type = ?, employment_type = ?, work_location = ?, status = ?, photo = ?, employee_id = ?, qr_code = ?,
+            email = ?, phone = ?, address = ?, emergency_contact = ?, emergency_phone = ?, 
+            date_of_birth = ?, joining_date = ?, salary = ?, bank_account = ?, 
+            aadhar_number = ?, pan_number = ?, blood_group = ?, manager = ?
+           WHERE id = ?`,
+          [
+            sanitizedData.name, sanitizedData.designation, sanitizedData.department, sanitizedData.type, 
+            sanitizedData.employment_type, sanitizedData.work_location, sanitizedData.status, photo, employeeId, qrCode,
+            sanitizedData.email, sanitizedData.phone, sanitizedData.address, sanitizedData.emergency_contact, 
+            sanitizedData.emergency_phone, sanitizedData.date_of_birth, sanitizedData.joining_date, 
+            sanitizedData.salary, sanitizedData.bank_account, sanitizedData.aadhar_number, 
+            sanitizedData.pan_number, sanitizedData.blood_group, sanitizedData.manager, req.params.id
+          ],
+          function(err) {
+            if (err) {
+              console.error('Database update error:', err);
+              return res.status(500).json({ error: 'Database update failed: ' + err.message });
+            }
+            res.json({ message: 'Employee updated successfully', employeeId });
+          }
+        );
+      } catch (error) {
+        console.error('Update error:', error);
+        return res.status(500).json({ error: 'Failed to update employee: ' + error.message });
+      }
+    });
+  } catch (error) {
+    console.error('Outer error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+app.get('/api/verify/:uuid', (req, res) => {
+  const { uuid } = req.params;
+  
+  if (!uuid || uuid.trim().length === 0) {
+    return res.status(400).json({ error: 'UUID or Employee ID is required' });
+  }
+  
+  const sanitizedUuid = uuid.trim().substring(0, 100); // Limit length
+  
+  db.get('SELECT * FROM employees WHERE uuid = ? OR employee_id = ?', [sanitizedUuid, sanitizedUuid], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (!row) {
+      return res.status(404).json({ error: 'ID not found' });
+    }
+    
+    // Return only public information for verification
+    const publicData = {
+      name: row.name,
+      employee_id: row.employee_id,
+      designation: row.designation,
+      department: row.department,
+      type: row.type,
+      photo: row.photo,
+      created_at: row.created_at,
+      status: row.status
+    };
+    
+    res.json(publicData);
+  });
+});
+
+// Admin-only endpoint for full employee details
+app.get('/api/admin/employees/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid employee ID' });
+  }
+  
+  db.get('SELECT * FROM employees WHERE id = ?', [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (!row) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    res.json(row);
+  });
+});
+
+// Generate ID Card HTML for download
+// Generate PDF for single employee
+app.get('/api/print-pdf/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid employee ID' });
+  }
+  
+  db.get('SELECT * FROM employees WHERE id = ?', [id], (err, employee) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${employee.name.replace(/[^a-zA-Z0-9]/g, '_')}_ID.json"`);
+    res.json(employee);
+  });
+});
+
+// Generate PDF for multiple employees
+app.post('/api/print-pdf-bulk', (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Invalid IDs array' });
+  }
+
+  // Validate all IDs are integers
+  const validIds = ids.filter(id => Number.isInteger(Number(id)) && Number(id) > 0);
+  if (validIds.length === 0) {
+    return res.status(400).json({ error: 'No valid employee IDs provided' });
+  }
+
+  const placeholders = validIds.map(() => '?').join(',');
+  db.all(`SELECT * FROM employees WHERE id IN (${placeholders})`, validIds, (err, employees) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="Bulk_Employee_IDs.json"`);
+    res.json(employees);
+  });
+});
+
+
+
+// Search employees with advanced filters
+app.get('/api/employees/search', (req, res) => {
+  try {
+    const { q, type, status, department, sortBy } = req.query;
+    
+    // Validate and sanitize search query
+    if (q && (typeof q !== 'string' || q.length > 100)) {
+      return res.status(400).json({ error: 'Invalid search query' });
+    }
+    
+    // Validate parameters
+    const validTypes = ['all', 'employee', 'intern'];
+    const validStatuses = ['all', 'active', 'inactive', 'terminated', 'resigned', 'on_leave', 'suspended'];
+    const validSortBy = ['name', 'date', 'id'];
+    
+    if (type && !validTypes.includes(type)) {
+      return res.status(400).json({ error: 'Invalid type parameter' });
+    }
+    
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status parameter' });
+    }
+    
+    if (sortBy && !validSortBy.includes(sortBy)) {
+      return res.status(400).json({ error: 'Invalid sortBy parameter' });
+    }
+    
+    if (department && (typeof department !== 'string' || department.length > 50)) {
+      return res.status(400).json({ error: 'Invalid department parameter' });
+    }
+    
+    let query = 'SELECT * FROM employees WHERE 1=1';
+    let params = [];
+
+    if (q && q.trim() !== '') {
+      const sanitizedQuery = q.trim().replace(/[%_\\]/g, '\\$&');
+      query += ' AND (name LIKE ? OR employee_id LIKE ? OR department LIKE ? OR designation LIKE ? OR email LIKE ? OR phone LIKE ?)';
+      const searchTerm = `%${sanitizedQuery}%`;
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    if (type && type !== 'all') {
+      query += ' AND type = ?';
+      params.push(type);
+    }
+
+    if (status && status !== 'all') {
+      query += ' AND status = ?';
+      params.push(status);
+    }
+
+    if (department && department !== 'all') {
+      query += ' AND department = ?';
+      params.push(department.trim());
+    }
+
+    // Sorting
+    if (sortBy === 'name') {
+      query += ' ORDER BY name ASC';
+    } else if (sortBy === 'date') {
+      query += ' ORDER BY created_at DESC';
+    } else if (sortBy === 'id') {
+      query += ' ORDER BY employee_id ASC';
+    } else {
+      query += ' ORDER BY created_at DESC';
+    }
+
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: 'Search failed. Please try again.' });
+      }
+      res.json(rows || []);
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Summary report endpoint for Excel export
+app.get('/api/summary-report', (req, res) => {
+  const { period } = req.query; // 'month' or 'all'
+  const isMonthly = period === 'month';
+  const dateFilter = isMonthly ? ` AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')` : '';
+  
+  const queries = {
+    totalEmployees: `SELECT COUNT(*) as count FROM employees WHERE 1=1${dateFilter}`,
+    employees: `SELECT COUNT(*) as count FROM employees WHERE type = 'employee'${dateFilter}`,
+    interns: `SELECT COUNT(*) as count FROM employees WHERE type = 'intern'${dateFilter}`,
+    activeIDs: `SELECT COUNT(*) as count FROM employees WHERE status = 'active'${dateFilter}`,
+    activeEmployees: `SELECT COUNT(*) as count FROM employees WHERE type = 'employee' AND status = 'active'${dateFilter}`,
+    activeInterns: `SELECT COUNT(*) as count FROM employees WHERE type = 'intern' AND status = 'active'${dateFilter}`,
+    inactiveEmployees: `SELECT COUNT(*) as count FROM employees WHERE type = 'employee' AND status = 'inactive'${dateFilter}`,
+    inactiveInterns: `SELECT COUNT(*) as count FROM employees WHERE type = 'intern' AND status = 'inactive'${dateFilter}`,
+    suspendedIDs: `SELECT COUNT(*) as count FROM employees WHERE status = 'suspended'${dateFilter}`,
+    onLeaveIDs: `SELECT COUNT(*) as count FROM employees WHERE status = 'on_leave'${dateFilter}`,
+    terminatedIDs: `SELECT COUNT(*) as count FROM employees WHERE status = 'terminated'${dateFilter}`,
+    resignedIDs: `SELECT COUNT(*) as count FROM employees WHERE status = 'resigned'${dateFilter}`,
+    createdThisMonth: `SELECT COUNT(*) as count FROM employees WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
+  };
+
+  const results = {};
+  let completed = 0;
+  const total = Object.keys(queries).length;
+
+  Object.entries(queries).forEach(([key, query]) => {
+    db.get(query, (err, row) => {
+      if (err) {
+        results[key] = 0;
+      } else {
+        results[key] = row.count;
+      }
+      completed++;
+      if (completed === total) {
+        // Format for Excel export
+        const summaryData = [
+          { Metric: 'Total Employees', Count: results.totalEmployees },
+          { Metric: 'Employees', Count: results.employees },
+          { Metric: 'Interns', Count: results.interns },
+          { Metric: 'Active IDs', Count: results.activeIDs },
+          { Metric: 'Active Employees', Count: results.activeEmployees },
+          { Metric: 'Active Interns', Count: results.activeInterns },
+          { Metric: 'Inactive Employees', Count: results.inactiveEmployees },
+          { Metric: 'Inactive Interns', Count: results.inactiveInterns },
+          { Metric: 'Suspended IDs', Count: results.suspendedIDs },
+          { Metric: 'IDs On Leave', Count: results.onLeaveIDs },
+          { Metric: 'Terminated IDs', Count: results.terminatedIDs },
+          { Metric: 'Resigned IDs', Count: results.resignedIDs },
+          { Metric: 'Created This Month', Count: results.createdThisMonth }
+        ];
+        
+        res.json({
+          period: isMonthly ? 'Current Month' : 'All Time',
+          data: summaryData,
+          raw: results
+        });
+      }
+    });
+  });
+});
+
+// Get unique departments
+app.get('/api/departments', (req, res) => {
+  db.all('SELECT DISTINCT department FROM employees WHERE department IS NOT NULL ORDER BY department', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows.map(row => row.department));
+  });
+});
+
+// Analytics endpoint
+app.get('/api/analytics', (req, res) => {
+  const { month } = req.query;
+  const isMonthly = month === 'current';
+  const dateFilter = isMonthly ? ` AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')` : '';
+  
+  const queries = {
+    total: `SELECT COUNT(*) as count FROM employees WHERE 1=1${dateFilter}`,
+    employees: `SELECT COUNT(*) as count FROM employees WHERE type = 'employee'${dateFilter}`,
+    interns: `SELECT COUNT(*) as count FROM employees WHERE type = 'intern'${dateFilter}`,
+    active: `SELECT COUNT(*) as count FROM employees WHERE status = 'active'${dateFilter}`,
+    activeEmployees: `SELECT COUNT(*) as count FROM employees WHERE type = 'employee' AND status = 'active'${dateFilter}`,
+    activeInterns: `SELECT COUNT(*) as count FROM employees WHERE type = 'intern' AND status = 'active'${dateFilter}`,
+    inactiveEmployees: `SELECT COUNT(*) as count FROM employees WHERE type = 'employee' AND status = 'inactive'${dateFilter}`,
+    inactiveInterns: `SELECT COUNT(*) as count FROM employees WHERE type = 'intern' AND status = 'inactive'${dateFilter}`,
+    suspended: `SELECT COUNT(*) as count FROM employees WHERE status = 'suspended'${dateFilter}`,
+    onLeave: `SELECT COUNT(*) as count FROM employees WHERE status = 'on_leave'${dateFilter}`,
+    thisMonth: `SELECT COUNT(*) as count FROM employees WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
+  };
+
+  const results = {};
+  let completed = 0;
+  const total = Object.keys(queries).length;
+
+  Object.entries(queries).forEach(([key, query]) => {
+    db.get(query, (err, row) => {
+      if (err) {
+        results[key] = 0;
+      } else {
+        results[key] = row.count;
+      }
+      completed++;
+      if (completed === total) {
+        res.json(results);
+      }
+    });
+  });
+});
+
+// Export data endpoint
+app.get('/api/export/:type', (req, res) => {
+  const { type } = req.params;
+  const validTypes = ['all', 'employee', 'intern'];
+  
+  if (!validTypes.includes(type)) {
+    return res.status(400).json({ error: 'Invalid export type. Must be: all, employee, or intern' });
+  }
+  
+  let query = 'SELECT * FROM employees';
+  let params = [];
+
+  if (type !== 'all') {
+    query += ' WHERE type = ?';
+    params.push(type);
+  }
+
+  query += ' ORDER BY created_at DESC';
+
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+// Bulk status update endpoint
+app.put('/api/employees/bulk-status', (req, res) => {
+  const { employeeIds, status } = req.body;
+  
+  if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
+    return res.status(400).json({ error: 'Employee IDs are required' });
+  }
+  
+  if (!status) {
+    return res.status(400).json({ error: 'Status is required' });
+  }
+  
+  // Validate all IDs are integers
+  const validIds = employeeIds.filter(id => Number.isInteger(Number(id)) && Number(id) > 0);
+  if (validIds.length === 0) {
+    return res.status(400).json({ error: 'No valid employee IDs provided' });
+  }
+  
+  // Validate status value
+  const validStatuses = ['active', 'inactive', 'terminated', 'resigned', 'on_leave', 'suspended'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status value' });
+  }
+  
+  const placeholders = validIds.map(() => '?').join(',');
+  const query = `UPDATE employees SET status = ? WHERE id IN (${placeholders})`;
+  const params = [status, ...validIds];
+  
+  db.run(query, params, function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ 
+      message: `Successfully updated ${this.changes} employee(s)`,
+      updatedCount: this.changes
+    });
+  });
+});
+
+// Simple bulk status update endpoint (no validation)
+app.patch('/api/bulk-status-update', (req, res) => {
+  const { employeeIds, status } = req.body;
+  
+  if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
+    return res.status(400).json({ error: 'Employee IDs are required' });
+  }
+  
+  if (!status) {
+    return res.status(400).json({ error: 'Status is required' });
+  }
+  
+  // Validate all IDs are integers
+  const validIds = employeeIds.filter(id => Number.isInteger(Number(id)) && Number(id) > 0);
+  if (validIds.length === 0) {
+    return res.status(400).json({ error: 'No valid employee IDs provided' });
+  }
+  
+  const placeholders = validIds.map(() => '?').join(',');
+  const query = `UPDATE employees SET status = ? WHERE id IN (${placeholders})`;
+  const params = [status, ...validIds];
+  
+  db.run(query, params, function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ 
+      message: `Successfully updated ${this.changes} employee(s)`,
+      updatedCount: this.changes
+    });
+  });
+});
+
+// Bulk type update endpoint with ID regeneration
+app.patch('/api/bulk-type-update', async (req, res) => {
+  const { employeeIds, type } = req.body;
+  
+  if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
+    return res.status(400).json({ error: 'Employee IDs are required' });
+  }
+  
+  if (!type || !['employee', 'intern'].includes(type)) {
+    return res.status(400).json({ error: 'Valid type is required (employee or intern)' });
+  }
+  
+  // Validate all IDs are integers
+  const validIds = employeeIds.filter(id => Number.isInteger(Number(id)) && Number(id) > 0);
+  if (validIds.length === 0) {
+    return res.status(400).json({ error: 'No valid employee IDs provided' });
+  }
+  
+  try {
+    let updatedCount = 0;
+    
+    for (const employeeId of validIds) {
+      // Get current employee data
+      const employee = await new Promise((resolve, reject) => {
+        db.get('SELECT * FROM employees WHERE id = ?', [employeeId], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+      
+      if (employee && employee.type !== type) {
+        // Generate new employee ID and QR code
+        const newEmployeeId = await generateIdNumber(type);
+        const newQrCode = await generateQRCode(newEmployeeId, employee.uuid);
+        
+        // Update employee with new type, ID, and QR code
+        await new Promise((resolve, reject) => {
+          db.run(
+            'UPDATE employees SET type = ?, employee_id = ?, qr_code = ? WHERE id = ?',
+            [type, newEmployeeId, newQrCode, employeeId],
+            function(err) {
+              if (err) reject(err);
+              else resolve();
+            }
+          );
+        });
+        
+        updatedCount++;
+      }
+    }
+    
+    res.json({ 
+      message: `Successfully updated ${updatedCount} employee(s)`,
+      updatedCount
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  db.get('SELECT COUNT(*) as count FROM employees', (err, row) => {
+    if (err) {
+      return res.status(500).json({ 
+        status: 'error', 
+        message: 'Database connection failed',
+        error: err.message 
+      });
+    }
+    res.json({ 
+      status: 'ok', 
+      message: 'Server and database are running',
+      employeeCount: row.count,
+      timestamp: new Date().toISOString()
+    });
+  });
+});
+
+// Error handling middleware (must be last)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Health check available at http://localhost:${PORT}/api/health`);
+});
