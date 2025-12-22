@@ -268,18 +268,18 @@ const VerifyID = () => {
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
               <h2 style={{ fontSize: '1.8rem', fontWeight: '600', color: '#2c3e50', margin: '0 0 0.5rem 0' }}>Enter Verification Details</h2>
-              <p style={{ color: '#6c757d', fontSize: '1rem', margin: 0 }}>Scan QR code or enter UUID/Employee ID manually</p>
+              <p style={{ color: '#6c757d', fontSize: '1rem', margin: 0 }}>Scan QR code or enter Employee ID (e.g., SWT-25-EMP-0001) or UUID</p>
             </div>
             
             <form onSubmit={handleVerify} style={{ maxWidth: '500px', margin: '0 auto' }}>
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#2c3e50' }}>ID UUID or Employee ID</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#2c3e50' }}>Employee ID or UUID</label>
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
                     value={inputUuid}
                     onChange={(e) => setInputUuid(e.target.value)}
-                    placeholder="Enter UUID, Employee ID, or scan QR code"
+                    placeholder="e.g., SWT-25-EMP-0001 or UUID"
                     style={{
                       width: '100%',
                       padding: '1rem 4rem 1rem 3rem',
@@ -323,7 +323,7 @@ const VerifyID = () => {
                 </div>
                 <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#6c757d', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span>💡</span>
-                  <span>Click the camera icon to scan QR code or enter manually</span>
+                  <span>Enter Employee ID (SWT-25-EMP-0001) or UUID, or scan QR code</span>
                 </div>
               </div>
               
