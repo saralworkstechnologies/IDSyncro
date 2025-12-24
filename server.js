@@ -4,18 +4,19 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const logger = require('./logger');
+const monitoring = require('./monitoring');
 
 // Simple logging function
 function log(level, message, data = null) {
-  const timestamp = new Date().toISOString();
-  const logEntry = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
-  console.log(logEntry);
-  if (data) {
-    console.log('Data:', JSON.stringify(data, null, 2));
-  }
+  const logData = { message, ...data };
+  logger[level](logData);
 }
 
 const { validateEmployeeData, sanitizeEmployeeData } = require('./validationUtils');
@@ -31,9 +32,78 @@ const xlsx = require('xlsx');
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
-app.use(express.json());
+// Security middleware
+app.use(helmet());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
+// Rate limiting with logging
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests, please try again later',
+  handler: (req, res) => {
+    logger.warn('Rate limit exceeded', {
+      ip: req.ip,
+      url: req.url,
+      requestId: req.requestId
+    });
+    monitoring.trackSecurityEvent('rateLimit');
+    res.status(429).json({ error: 'Too many requests, please try again later' });
+  }
+});
+app.use('/api/', limiter);
+
+// Verification endpoint rate limit
+const verifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  message: 'Too many verification requests',
+  handler: (req, res) => {
+    logger.warn('Verification rate limit exceeded', {
+      ip: req.ip,
+      identifier: req.params.uuid || req.params.identifier,
+      requestId: req.requestId
+    });
+    monitoring.trackSecurityEvent('rateLimit');
+    res.status(429).json({ error: 'Too many verification requests' });
+  }
+});
+app.use('/api/verify', verifyLimiter);
+app.use('/api/certificates/verify', verifyLimiter);
+
+app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static('uploads'));
+
+// HTTP request logging
+app.use(morgan('combined', {
+  stream: { write: (message) => logger.info(message.trim()) }
+}));
+
+// Monitoring middleware
+app.use(monitoring.trackRequest);
+
+// Request tracking middleware
+app.use((req, res, next) => {
+  req.requestId = uuidv4();
+  req.startTime = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - req.startTime;
+    logger.info('Request completed', {
+      requestId: req.requestId,
+      method: req.method,
+      url: req.url,
+      status: res.statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip
+    });
+  });
+  
+  next();
+});
 
 // Create uploads directory
 if (!fs.existsSync('uploads')) {
@@ -362,7 +432,12 @@ app.post('/api/employees', (req, res) => {
           }
           return res.status(500).json({ error: err.message });
         }
-        log('info', 'Employee created successfully', { id: this.lastID, employeeId, name: sanitizedData.name });
+        log('info', 'Employee created successfully', { 
+          id: this.lastID, 
+          employeeId, 
+          name: sanitizedData.name,
+          requestId: req.requestId 
+        });
         res.json({
           id: this.lastID,
           uuid,
@@ -1223,13 +1298,40 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Monitoring dashboard endpoint
+app.get('/api/monitoring/stats', (req, res) => {
+  res.json(monitoring.getStats());
+});
+
+// Recent logs endpoint
+app.get('/api/monitoring/logs/:type?', (req, res) => {
+  const { type = 'combined' } = req.params;
+  const { lines = 50 } = req.query;
+  
+  const validTypes = ['combined', 'error', 'security'];
+  if (!validTypes.includes(type)) {
+    return res.status(400).json({ error: 'Invalid log type' });
+  }
+  
+  const logs = monitoring.getRecentLogs(type, parseInt(lines));
+  res.json({ type, count: logs.length, logs });
+});
+
 // Error handling middleware (must be last)
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  logger.error('Unhandled error', {
+    error: err.message,
+    stack: err.stack,
+    requestId: req.requestId,
+    url: req.url,
+    method: req.method
+  });
   res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(PORT, () => {
+  logger.info(`Server started on port ${PORT}`);
+  logger.info(`Health check available at http://localhost:${PORT}/api/health`);
   console.log(`Server running on port ${PORT}`);
   console.log(`Health check available at http://localhost:${PORT}/api/health`);
 });
