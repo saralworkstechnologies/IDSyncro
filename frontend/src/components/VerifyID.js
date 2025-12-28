@@ -15,10 +15,15 @@ const VerifyID = () => {
     const type = params.get('type');
     if (type === 'certificate') {
       setActiveTab('certificate');
+    } else if (type === 'offer') {
+      setActiveTab('offer');
     }
     if (uuid) {
       if (type === 'certificate') {
         setActiveTab('certificate');
+        setTimeout(() => verifyID(uuid), 100);
+      } else if (type === 'offer') {
+        setActiveTab('offer');
         setTimeout(() => verifyID(uuid), 100);
       } else {
         verifyID(uuid);
@@ -35,12 +40,16 @@ const VerifyID = () => {
       if (activeTab === 'id') {
         response = await axios.get(`http://localhost:5000/api/verify/${verifyUuid}`);
         setVerificationData({ ...response.data, verificationType: 'id' });
-      } else {
+      } else if (activeTab === 'certificate') {
         response = await axios.get(`http://localhost:5000/api/certificates/verify/${verifyUuid}`);
         setVerificationData({ ...response.data, verificationType: 'certificate' });
+      } else if (activeTab === 'offer') {
+        response = await axios.get(`http://localhost:5000/api/offer-letters/verify/${verifyUuid}`);
+        setVerificationData({ ...response.data, verificationType: 'offer' });
       }
     } catch (error) {
-      setError(`The ${activeTab === 'id' ? 'Employee ID' : 'Certificate Code'} was not found or is invalid. Please check and try again.`);
+      const typeLabel = activeTab === 'id' ? 'Employee ID' : activeTab === 'certificate' ? 'Certificate Code' : 'Offer Letter Number';
+      setError(`The ${typeLabel} was not found or is invalid. Please check and try again.`);
       setVerificationData(null);
     } finally {
       setLoading(false);
@@ -52,7 +61,8 @@ const VerifyID = () => {
     if (inputUuid.trim()) {
       verifyID(inputUuid.trim());
     } else {
-      setError(`Please enter a valid ${activeTab === 'id' ? 'Employee ID' : 'Certificate Code'}`);
+      const typeLabel = activeTab === 'id' ? 'Employee ID' : activeTab === 'certificate' ? 'Certificate Code' : 'Offer Letter Number';
+      setError(`Please enter a valid ${typeLabel}`);
     }
   };
 
@@ -260,6 +270,23 @@ const VerifyID = () => {
                   >
                     Certificate
                   </button>
+                  <button
+                    onClick={() => { setActiveTab('offer'); resetVerification(); }}
+                    style={{
+                      flex: 1,
+                      padding: '0.75rem',
+                      border: 'none',
+                      borderRadius: '6px',
+                      backgroundColor: activeTab === 'offer' ? '#4F46E5' : 'transparent',
+                      color: activeTab === 'offer' ? 'white' : '#4B5563',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Offer Letter
+                  </button>
                 </div>
               </div>
 
@@ -272,13 +299,13 @@ const VerifyID = () => {
                     color: '#374151',
                     marginBottom: '0.5rem'
                   }}>
-                    {activeTab === 'id' ? 'Employee ID / UUID' : 'Certificate Code / UUID'}
+                    {activeTab === 'id' ? 'Employee ID / UUID' : activeTab === 'certificate' ? 'Certificate Code / UUID' : 'Offer Letter Number'}
                   </label>
                   <input
                     type="text"
                     value={inputUuid}
                     onChange={(e) => setInputUuid(e.target.value)}
-                    placeholder={activeTab === 'id' ? "Enter employee ID or UUID" : "Enter certificate code or UUID"}
+                    placeholder={activeTab === 'id' ? "Enter employee ID or UUID" : activeTab === 'certificate' ? "Enter certificate code or UUID" : "Enter offer letter number (e.g., OL-2024-123456)"}
                     style={{
                       width: '100%',
                       padding: '0.75rem 1rem',
@@ -359,7 +386,9 @@ const VerifyID = () => {
                   }}>
                     {activeTab === 'id' 
                       ? 'Enter the full Employee ID or UUID found on the identification document.'
-                      : 'Enter the Certificate Code or UUID exactly as shown on the certificate.'}
+                      : activeTab === 'certificate'
+                      ? 'Enter the Certificate Code or UUID exactly as shown on the certificate.'
+                      : 'Enter the Offer Letter Number exactly as shown (format: OL-YYYY-XXXXXX).'}
                   </p>
                 </div>
               </form>
@@ -452,7 +481,7 @@ const VerifyID = () => {
               }}>
                 {/* Verification Header */}
                 <div style={{
-                  backgroundColor: verificationData.verificationType === 'id' ? '#4F46E5' : '#059669',
+                  backgroundColor: verificationData.verificationType === 'id' ? '#4F46E5' : verificationData.verificationType === 'certificate' ? '#059669' : '#F59E0B',
                   color: 'white',
                   padding: '1.5rem'
                 }}>
@@ -469,7 +498,7 @@ const VerifyID = () => {
                           justifyContent: 'center',
                           fontSize: '1.5rem'
                         }}>
-                          {verificationData.verificationType === 'id' ? '👔' : '📜'}
+                          {verificationData.verificationType === 'id' ? '👔' : verificationData.verificationType === 'certificate' ? '📜' : '📄'}
                         </div>
                         <div>
                           <h2 style={{ 
@@ -477,7 +506,9 @@ const VerifyID = () => {
                             fontWeight: '700',
                             margin: 0
                           }}>
-                            {verificationData.name}
+                            {verificationData.verificationType === 'offer' 
+                              ? (verificationData.candidate_name || verificationData.name || 'Offer Letter')
+                              : verificationData.name}
                           </h2>
                           <p style={{ 
                             fontSize: '0.875rem',
@@ -486,7 +517,9 @@ const VerifyID = () => {
                           }}>
                             {verificationData.verificationType === 'id' 
                               ? verificationData.employee_id
-                              : verificationData.certificate_code}
+                              : verificationData.verificationType === 'certificate'
+                              ? verificationData.certificate_code
+                              : verificationData.offer_letter_number}
                           </p>
                         </div>
                       </div>
@@ -557,7 +590,83 @@ const VerifyID = () => {
                     gap: '1rem',
                     marginBottom: '2rem'
                   }}>
-                    {verificationData.verificationType === 'id' ? (
+                    {verificationData.verificationType === 'offer' ? (
+                      <>
+                        <div style={{ 
+                          backgroundColor: '#F9FAFB', 
+                          padding: '1rem',
+                          borderRadius: '8px',
+                          border: '1px solid #E5E7EB'
+                        }}>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
+                            CANDIDATE NAME
+                          </div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
+                            {verificationData.candidate_name || verificationData.name || 'N/A'}
+                          </div>
+                        </div>
+                        
+                        <div style={{ 
+                          backgroundColor: '#F9FAFB', 
+                          padding: '1rem',
+                          borderRadius: '8px',
+                          border: '1px solid #E5E7EB'
+                        }}>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
+                            COMPANY NAME
+                          </div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
+                            {verificationData.company_name || 'N/A'}
+                          </div>
+                        </div>
+                        
+                        <div style={{ 
+                          backgroundColor: '#F9FAFB', 
+                          padding: '1rem',
+                          borderRadius: '8px',
+                          border: '1px solid #E5E7EB'
+                        }}>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
+                            DESIGNATION
+                          </div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
+                            {verificationData.designation || 'N/A'}
+                          </div>
+                        </div>
+                        
+                        <div style={{ 
+                          backgroundColor: '#F9FAFB', 
+                          padding: '1rem',
+                          borderRadius: '8px',
+                          border: '1px solid #E5E7EB'
+                        }}>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
+                            VALIDITY PERIOD
+                          </div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
+                            {verificationData.validity_period || 'N/A'}
+                          </div>
+                        </div>
+                        
+                        <div style={{ 
+                          backgroundColor: '#F9FAFB', 
+                          padding: '1rem',
+                          borderRadius: '8px',
+                          border: '1px solid #E5E7EB'
+                        }}>
+                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
+                            ISSUE DATE
+                          </div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
+                            {new Date(verificationData.issue_date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    ) : verificationData.verificationType === 'id' ? (
                       <>
                         <div style={{ 
                           backgroundColor: '#F9FAFB', 
@@ -681,7 +790,9 @@ const VerifyID = () => {
                     <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>
                       Verification ID: {verificationData.verificationType === 'id' 
                         ? verificationData.employee_id 
-                        : verificationData.certificate_code}
+                        : verificationData.verificationType === 'certificate'
+                        ? verificationData.certificate_code
+                        : verificationData.offer_letter_number}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
@@ -744,7 +855,7 @@ const VerifyID = () => {
                   border: '2px dashed #D1D5DB'
                 }}>
                   <span style={{ fontSize: '2rem', color: '#9CA3AF' }}>
-                    {activeTab === 'id' ? '👔' : '📜'}
+                    {activeTab === 'id' ? '👔' : activeTab === 'certificate' ? '📜' : '📄'}
                   </span>
                 </div>
                 <h3 style={{ 
@@ -761,7 +872,7 @@ const VerifyID = () => {
                   maxWidth: '400px',
                   margin: '0 auto 1.5rem'
                 }}>
-                  Enter a {activeTab === 'id' ? 'Employee ID' : 'Certificate Code'} in the form to begin verification. 
+                  Enter a {activeTab === 'id' ? 'Employee ID' : activeTab === 'certificate' ? 'Certificate Code' : 'Offer Letter Number'} in the form to begin verification. 
                   Results will appear here.
                 </p>
                 <div style={{ 

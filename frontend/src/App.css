@@ -3500,3 +3500,924 @@ body {
   margin: 0;
   font-size: 0.95rem;
 }
+
+
+/* Offer Letter Navigation Tabs */
+.certificates-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.certificates-tabs a,
+.certificates-tabs .tab-link {
+  flex: 1;
+  min-width: 150px;
+  padding: 1rem 1.5rem;
+  text-decoration: none;
+  color: #495057;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.certificates-tabs a:hover,
+.certificates-tabs .tab-link:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  text-decoration: none;
+}
+
+.certificates-tabs a.active-tab,
+.certificates-tabs .tab-link.active-tab {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .certificates-tabs {
+    flex-direction: column;
+  }
+  
+  .certificates-tabs a,
+  .certificates-tabs .tab-link {
+    min-width: auto;
+  }
+}
+
+
+/* Offer Letter Components Professional Styling */
+
+/* Create Offer Letter */
+.create-certificate-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.certificate-form-card {
+  background: white;
+  border-radius: 15px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.certificate-form-card h2 {
+  color: #2c3e50;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.certificate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.certificate-form .btn-primary {
+  margin-top: 1rem;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  width: 100%;
+}
+
+.success-message {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border-radius: 12px;
+  border-left: 5px solid #28a745;
+  text-align: center;
+}
+
+.success-message h3 {
+  color: #155724;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.success-message p {
+  color: #155724;
+  margin: 0.5rem 0;
+  font-weight: 600;
+}
+
+/* Bulk Offer Letter */
+.bulk-certificate-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.bulk-upload-card {
+  background: white;
+  border-radius: 15px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.bulk-upload-card h2 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bulk-upload-card > p {
+  text-align: center;
+  color: #6c757d;
+  margin-bottom: 2rem;
+}
+
+.upload-section {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.file-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.file-input-wrapper input[type="file"] {
+  display: none;
+}
+
+.file-input-label {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.file-input-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+}
+
+.file-name {
+  color: #495057;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-large {
+  padding: 1.2rem 3rem;
+  font-size: 1.2rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.upload-info {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+}
+
+.upload-info h3, .upload-info h4 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.info-item strong {
+  color: #495057;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.preview-table-wrapper {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.preview-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.preview-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+  color: #2c3e50;
+}
+
+.preview-table tr:hover {
+  background: #f8f9fa;
+}
+
+.staged-section {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-radius: 12px;
+  border-left: 5px solid #ffc107;
+  text-align: center;
+}
+
+.staged-section h3 {
+  color: #856404;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.warning-text {
+  color: #856404;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.result-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.result-info p {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.generated-list {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+}
+
+.generated-list h4 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.generated-list ul {
+  list-style: none;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.generated-list li {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+  color: #495057;
+}
+
+.generated-list li:last-child {
+  border-bottom: none;
+}
+
+.instructions {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: #e7f3ff;
+  border-radius: 12px;
+  border-left: 5px solid #007bff;
+}
+
+.instructions h3 {
+  color: #004085;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.instructions ol {
+  color: #004085;
+  padding-left: 1.5rem;
+  line-height: 1.8;
+}
+
+.instructions li {
+  margin-bottom: 0.5rem;
+}
+
+/* Manage Offer Letters */
+.manage-certificates-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.manage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.manage-header h2 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.filter-section label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.filter-section select {
+  flex: 1;
+  max-width: 300px;
+  padding: 0.75rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.filter-section select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  border-left: 5px solid #667eea;
+  transition: all 0.3s;
+}
+
+.stat-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.stat-box h3 {
+  font-size: 2.5rem;
+  color: #667eea;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.stat-box p {
+  color: #6c757d;
+  margin: 0;
+  font-weight: 600;
+}
+
+.certificates-table-wrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+
+.certificates-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.certificates-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.certificates-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  color: #2c3e50;
+}
+
+.certificates-table tr:hover {
+  background: #f8f9fa;
+}
+
+.status-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+.batches-section {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.batches-section h3 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.batches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.batch-card {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 10px;
+  border-left: 5px solid #17a2b8;
+  transition: all 0.3s;
+}
+
+.batch-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.batch-card h4 {
+  color: #17a2b8;
+  margin: 0 0 1rem 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.batch-card p {
+  color: #495057;
+  margin: 0.5rem 0;
+  font-weight: 500;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .manage-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .manage-header button {
+    width: 100%;
+  }
+  
+  .filter-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-section select {
+    max-width: none;
+  }
+  
+  .upload-section {
+    flex-direction: column;
+  }
+  
+  .certificates-table-wrapper {
+    padding: 0.5rem;
+  }
+  
+  .certificates-table {
+    font-size: 0.85rem;
+  }
+  
+  .certificates-table th,
+  .certificates-table td {
+    padding: 0.5rem;
+  }
+}
+
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 15px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-edit {
+  max-width: 800px;
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px 15px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.modal-close:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.detail-row strong {
+  color: #495057;
+  font-weight: 600;
+}
+
+.detail-row span {
+  color: #2c3e50;
+  font-weight: 500;
+  text-align: right;
+}
+
+.modal-body hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 2px solid #e9ecef;
+}
+
+.modal-body h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e9ecef;
+}
+
+.modal-actions button {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* Action Buttons */
+.action-buttons-inline {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.btn-action {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s;
+  background: #f8f9fa;
+}
+
+.btn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-view {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+/* Search Input */
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+  
+  .action-buttons-inline {
+    flex-direction: column;
+  }
+  
+  .filter-section {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+}
+
+
+/* Table Width Fix */
+.certificates-table {
+  min-width: 1200px;
+}
+
+.certificates-table th,
+.certificates-table td {
+  padding: 0.75rem;
+  white-space: nowrap;
+}
+
+.certificates-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.certificates-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.certificates-table-wrapper::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+/* Hide Modal Scrollbar */
+.modal-content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Compact Action Buttons */
+.action-buttons-inline {
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
+.btn-action {
+  padding: 0.4rem 0.6rem;
+  font-size: 1.1rem;
+  min-width: 36px;
+}
+
+
+/* Increase Container Width for Manage Page */
+.manage-certificates-container {
+  max-width: 1600px;
+}
+
+.certificates-table {
+  min-width: auto;
+  width: 100%;
+}
+
+.certificates-table th:last-child,
+.certificates-table td:last-child {
+  position: sticky;
+  right: 0;
+  background: white;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+}
+
+.certificates-table th:last-child {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+
+/* Global Main Content Width Increase */
+.main-content {
+  max-width: 1600px;
+}
+
+
+/* Increase Create Employee Container Width */
+.create-employee-container {
+  max-width: 1600px;
+}
+
+
+/* Increase Certificates Container Width */
+.certificates-container {
+  max-width: 1600px;
+}
+
+
+/* Increase All Offer Letter & Certificate Component Widths */
+.create-certificate-container,
+.bulk-certificate-container,
+.bulk-upload-card,
+.certificate-form-card {
+  max-width: 1600px;
+}
+
+
+/* Increase Bulk Upload Container Width */
+.bulk-upload-container {
+  max-width: 1600px;
+}
+
+
+/* Increase Upload Section Elements Width */
+.upload-section,
+.template-section,
+.upload-file-section,
+.preview-section,
+.results-section {
+  max-width: 1600px;
+}

@@ -414,7 +414,10 @@ const EmployeeList = () => {
               </button>
             </div>
           ) : (
-            <Link to="/create" className="btn btn-primary">Create New ID</Link>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Link to="/create" className="btn btn-primary">Create New ID</Link>
+              <Link to="/bulk-upload" className="btn btn-secondary">📤 Bulk Upload</Link>
+            </div>
           )}
         </div>
         

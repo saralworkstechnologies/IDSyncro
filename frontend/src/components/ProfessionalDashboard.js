@@ -166,11 +166,26 @@ const ProfessionalDashboard = () => {
     }
   };
 
+  const exportOfferLetters = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5000/api/offer-letters/export');
+      const offerData = response.data;
+      exportToExcel(offerData, 'Offer_Letters_Report');
+    } catch (error) {
+      console.error('Error exporting offer letters:', error);
+      alert('Error exporting offer letters');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const bulkActions = [
     { label: 'Export All Data', action: exportAllEmployees, icon: '📊', color: '#2ecc71' },
     { label: 'Employee Report', action: () => exportByType('employee'), icon: '👥', color: '#3498db' },
     { label: 'Intern Report', action: () => exportByType('intern'), icon: '🎓', color: '#9b59b6' },
     { label: 'Certificates Report', action: exportCertificates, icon: '📜', color: '#16a085' },
+    { label: 'Offer Letters Report', action: exportOfferLetters, icon: '📄', color: '#f39c12' },
     { label: 'Summary Report', action: exportSummaryReport, icon: '📈', color: '#e67e22' }
   ];
 
@@ -178,6 +193,7 @@ const ProfessionalDashboard = () => {
     { label: 'Create Employee', path: '/create', icon: '➕', color: '#27ae60' },
     { label: 'Manage IDs', path: '/employees', icon: '👤', color: '#2980b9' },
     { label: 'Certificates', path: '/certificates', icon: '📜', color: '#16a085' },
+    { label: 'Offer Letters', path: '/offer-letters', icon: '📄', color: '#f39c12' },
     { label: 'Print ID Card', path: '/employees?print=true', icon: '🖨️', color: '#e74c3c' },
     { label: 'Verify ID', path: '/verify', icon: '✅', color: '#8e44ad' },
     { label: 'Bulk Upload', path: '/bulk-upload', icon: '📤', color: '#d35400' }

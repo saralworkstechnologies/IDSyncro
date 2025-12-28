@@ -11,6 +11,16 @@ A comprehensive web application for organizations to design, issue, and verify I
 - Photo upload and management
 - QR code generation for verification
 
+### Offer Letter Generator
+- **Individual Generation**: Create single offer letters via web form
+- **Bulk Generation**: Import Excel files for mass generation
+- **Staging System**: Review data before generating offer letter numbers
+- **Unique Numbers**: Format `OL-YYYY-XXXXXX` (immutable, globally unique)
+- **Public Verification**: Verify offer letters by number
+- **Excel Export**: Export with all original data plus generated numbers
+- **Batch Tracking**: Track and manage bulk generations
+- **Metadata Storage**: Complete audit trail with timestamps and file hashes
+
 ### Template Designer
 - Dynamic form fields based on ID type
 - Photo upload with preview
@@ -89,6 +99,37 @@ A comprehensive web application for organizations to design, issue, and verify I
 4. Upload photo
 5. Click "Generate ID"
 
+### Creating Offer Letters
+
+#### Individual Offer Letter
+1. Go to "Offer Letters" → "Create Single"
+2. Fill in candidate details (name, company, designation, etc.)
+3. Click "Generate Offer Letter"
+4. Unique offer letter number is generated instantly
+
+#### Bulk Offer Letter Generation
+1. Go to "Offer Letters" → "Bulk Generation"
+2. Prepare Excel file with offer letter data
+3. Upload Excel file - data is staged (no numbers yet)
+4. Review staged data preview
+5. Click "Generate Offer Letters" to create unique numbers
+6. All offer letters generated in a single batch
+7. Export results with generated numbers
+
+### Managing Offer Letters
+1. Go to "Offer Letters" → "Manage"
+2. View all generated offer letters
+3. Filter by batch
+4. Export to Excel with all data
+5. View batch statistics
+
+### Verifying Offer Letters
+1. Go to "Verify ID" page (http://localhost:3000/verify)
+2. Select "Offer Letter" tab
+3. Enter offer letter number
+4. View public information (company, designation, validity)
+5. Confirm authenticity
+
 ### Managing IDs
 1. Go to "Manage IDs" page
 2. View all created IDs
@@ -104,12 +145,23 @@ A comprehensive web application for organizations to design, issue, and verify I
 
 ## API Endpoints
 
+### Employee/ID Endpoints
 - `POST /api/employees` - Create new employee/intern
 - `GET /api/employees` - Get all employees
 - `GET /api/employees/:id` - Get specific employee
 - `PUT /api/employees/:id` - Update employee
 - `DELETE /api/employees/:id` - Delete employee
 - `GET /api/verify/:uuid` - Verify ID by UUID
+
+### Offer Letter Endpoints
+- `POST /api/offer-letters/upload-excel` - Upload Excel for staging
+- `GET /api/offer-letters/staging` - Get staged data
+- `POST /api/offer-letters/generate` - Generate offer letters from staging
+- `POST /api/offer-letters/create-single` - Create individual offer letter
+- `GET /api/offer-letters` - Get all offer letters
+- `GET /api/offer-letters/verify/:offerNumber` - Verify offer letter (public)
+- `GET /api/offer-letters/export` - Export offer letters
+- `GET /api/offer-letters/batches` - Get batch information
 
 ## ID Format
 
@@ -121,6 +173,12 @@ A comprehensive web application for organizations to design, issue, and verify I
 - Format: `SWT-25-INT-0XXX`
 - Example: `SWT-25-INT-0001`
 
+### Offer Letter Number
+- Format: `OL-YYYY-XXXXXX`
+- Example: `OL-2024-123456`
+- YYYY: Current year
+- XXXXXX: Last 6 digits of timestamp (ensures uniqueness)
+
 ## QR Code Integration
 
 Each ID includes a QR code that contains:
@@ -131,10 +189,21 @@ Each ID includes a QR code that contains:
 ## Security Features
 
 - UUID-based verification
+- Unique offer letter numbers (immutable, database-enforced)
 - Secure file upload handling
 - Input validation
 - CORS protection
 - SQL injection prevention
+- SHA-256 file hash verification
+- Public data control (sensitive data protected)
+- Transaction-based generation (all-or-nothing)
+
+## Documentation
+
+- [Main README](README.md) - This file
+- [Offer Letter Guide](OFFER_LETTER_GUIDE.md) - Detailed offer letter feature documentation
+- [Implementation Complete](IMPLEMENTATION_COMPLETE.md) - Certificate system documentation
+- [Security Audit](SECURITY_AUDIT.md) - Security features and best practices
 
 ## Future Enhancements
 

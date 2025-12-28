@@ -73,6 +73,7 @@ const verifyLimiter = rateLimit({
 });
 app.use('/api/verify', verifyLimiter);
 app.use('/api/certificates/verify', verifyLimiter);
+app.use('/api/offer-letters/verify', verifyLimiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static('uploads'));
@@ -152,6 +153,50 @@ db.serialize(() => {
   db.run('CREATE INDEX IF NOT EXISTS idx_cert_person_uuid ON certificates(person_uuid)');
   db.run('CREATE INDEX IF NOT EXISTS idx_cert_status ON certificates(status)');
   db.run('CREATE INDEX IF NOT EXISTS idx_cert_batch ON certificates(batch_id)');
+  
+  // Offer letters staging table
+  db.run(`CREATE TABLE IF NOT EXISTS offer_letters_staging (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    staging_id TEXT UNIQUE NOT NULL,
+    excel_data TEXT NOT NULL,
+    excel_filename TEXT,
+    excel_hash TEXT,
+    row_number INTEGER,
+    import_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'draft'
+  )`);
+  
+  // Offer letters table
+  db.run(`CREATE TABLE IF NOT EXISTS offer_letters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    offer_letter_number TEXT UNIQUE NOT NULL,
+    offer_data TEXT NOT NULL,
+    batch_id TEXT,
+    excel_filename TEXT,
+    excel_hash TEXT,
+    row_number INTEGER,
+    import_timestamp DATETIME,
+    generated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    generated_by TEXT,
+    status TEXT DEFAULT 'active'
+  )`);
+  
+  // Offer letter batches table
+  db.run(`CREATE TABLE IF NOT EXISTS offer_letter_batches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch_id TEXT UNIQUE NOT NULL,
+    excel_filename TEXT,
+    excel_hash TEXT,
+    offer_count INTEGER DEFAULT 0,
+    import_timestamp DATETIME,
+    generated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    generated_by TEXT
+  )`);
+  
+  // Create indexes for offer letters
+  db.run('CREATE INDEX IF NOT EXISTS idx_offer_number ON offer_letters(offer_letter_number)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_offer_batch ON offer_letters(batch_id)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_offer_status ON offer_letters(status)');
   
   db.run(`CREATE TABLE IF NOT EXISTS employees (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1280,6 +1325,315 @@ app.get('/api/certificates/export', (req, res) => {
   });
 });
 
+// ============ OFFER LETTER ROUTES ============
+
+// Generate unique offer letter number with retry logic
+function generateOfferLetterNumber() {
+  const year = new Date().getFullYear();
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `OL-${year}-${timestamp}${random.slice(0, 3)}`;
+}
+
+// Upload Excel for offer letters (staging)
+app.post('/api/offer-letters/upload-excel', uploadExcel.single('excel'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+    
+    if (data.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'Excel file is empty' });
+    }
+    
+    const excelHash = crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
+    const stagingId = `STAGE-${Date.now()}`;
+    const importTimestamp = new Date().toISOString();
+    
+    // Clear previous staging data
+    db.run('DELETE FROM offer_letters_staging', (err) => {
+      if (err) {
+        fs.unlinkSync(req.file.path);
+        return res.status(500).json({ error: err.message });
+      }
+      
+      // Insert staging records
+      const stmt = db.prepare(`INSERT INTO offer_letters_staging 
+        (staging_id, excel_data, excel_filename, excel_hash, row_number, import_timestamp) 
+        VALUES (?, ?, ?, ?, ?, ?)`);
+      
+      data.forEach((row, index) => {
+        stmt.run(
+          `${stagingId}-${index}`,
+          JSON.stringify(row),
+          req.file.originalname,
+          excelHash,
+          index + 1,
+          importTimestamp
+        );
+      });
+      
+      stmt.finalize();
+      fs.unlinkSync(req.file.path);
+      
+      res.json({
+        success: true,
+        stagingId,
+        filename: req.file.originalname,
+        rowCount: data.length,
+        excelHash,
+        headers: Object.keys(data[0]),
+        preview: data.slice(0, 5)
+      });
+    });
+  } catch (error) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get staged offer letters
+app.get('/api/offer-letters/staging', (req, res) => {
+  db.all('SELECT * FROM offer_letters_staging ORDER BY row_number', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    const data = rows.map(row => ({
+      ...row,
+      excel_data: JSON.parse(row.excel_data)
+    }));
+    res.json(data);
+  });
+});
+
+// Generate offer letters from staging
+app.post('/api/offer-letters/generate', async (req, res) => {
+  try {
+    const stagingData = await new Promise((resolve, reject) => {
+      db.all('SELECT * FROM offer_letters_staging ORDER BY row_number', (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+    
+    if (stagingData.length === 0) {
+      return res.status(400).json({ error: 'No staged data found' });
+    }
+    
+    const batchId = `BATCH-OL-${Date.now()}`;
+    const generatedTimestamp = new Date().toISOString();
+    const results = [];
+    
+    // Start transaction
+    await new Promise((resolve, reject) => {
+      db.run('BEGIN IMMEDIATE TRANSACTION', (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    
+    try {
+      // Create batch record
+      await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT INTO offer_letter_batches 
+           (batch_id, excel_filename, excel_hash, offer_count, import_timestamp, generated_timestamp) 
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            batchId,
+            stagingData[0].excel_filename,
+            stagingData[0].excel_hash,
+            stagingData.length,
+            stagingData[0].import_timestamp,
+            generatedTimestamp
+          ],
+          (err) => err ? reject(err) : resolve()
+        );
+      });
+      
+      // Generate offer letters with unique numbers
+      for (const staged of stagingData) {
+        const offerLetterNumber = generateOfferLetterNumber();
+        
+        await new Promise((resolve, reject) => {
+          db.run(
+            `INSERT INTO offer_letters 
+             (offer_letter_number, offer_data, batch_id, excel_filename, excel_hash, 
+              row_number, import_timestamp, generated_timestamp) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              offerLetterNumber,
+              staged.excel_data,
+              batchId,
+              staged.excel_filename,
+              staged.excel_hash,
+              staged.row_number,
+              staged.import_timestamp,
+              generatedTimestamp
+            ],
+            (err) => err ? reject(err) : resolve()
+          );
+        });
+        
+        results.push({ offerLetterNumber, row: staged.row_number });
+      }
+      
+      // Clear staging after successful generation
+      await new Promise((resolve, reject) => {
+        db.run('DELETE FROM offer_letters_staging', (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      
+      // Commit transaction
+      await new Promise((resolve, reject) => {
+        db.run('COMMIT', (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      
+      res.json({
+        success: true,
+        batchId,
+        count: results.length,
+        offerLetters: results,
+        message: `Successfully generated ${results.length} offer letters`
+      });
+    } catch (error) {
+      // Rollback on error
+      await new Promise((resolve) => {
+        db.run('ROLLBACK', () => resolve());
+      });
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create single offer letter
+app.post('/api/offer-letters/create-single', async (req, res) => {
+  try {
+    const { offerData } = req.body;
+    
+    if (!offerData) {
+      return res.status(400).json({ error: 'Offer data is required' });
+    }
+    
+    const offerLetterNumber = generateOfferLetterNumber();
+    const generatedTimestamp = new Date().toISOString();
+    
+    db.run(
+      `INSERT INTO offer_letters 
+       (offer_letter_number, offer_data, generated_timestamp) 
+       VALUES (?, ?, ?)`,
+      [offerLetterNumber, JSON.stringify(offerData), generatedTimestamp],
+      function(err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        res.json({
+          success: true,
+          offerLetterNumber,
+          message: 'Offer letter created successfully'
+        });
+      }
+    );
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all offer letters
+app.get('/api/offer-letters', (req, res) => {
+  db.all('SELECT * FROM offer_letters ORDER BY generated_timestamp DESC', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    const data = rows.map(row => ({
+      ...row,
+      offer_data: JSON.parse(row.offer_data)
+    }));
+    res.json(data);
+  });
+});
+
+// Verify offer letter
+app.get('/api/offer-letters/verify/:offerNumber', (req, res) => {
+  const { offerNumber } = req.params;
+  
+  if (!offerNumber) {
+    return res.status(400).json({ error: 'Offer letter number is required' });
+  }
+  
+  db.get(
+    'SELECT * FROM offer_letters WHERE offer_letter_number = ? AND status = "active"',
+    [offerNumber],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (!row) {
+        return res.status(404).json({ error: 'Offer letter not found' });
+      }
+      
+      const offerData = JSON.parse(row.offer_data);
+      
+      // Return only public fields with flexible field name handling
+      const publicData = {
+        offer_letter_number: row.offer_letter_number,
+        candidate_name: offerData.candidate_name || offerData['Candidate Name'] || offerData.name || 'N/A',
+        company_name: offerData.company_name || offerData.Company || offerData['Company Name'] || 'N/A',
+        designation: offerData.designation || offerData.Designation || 'N/A',
+        validity_period: offerData.validity_period || offerData['Validity Period'] || 'N/A',
+        issue_date: row.generated_timestamp,
+        status: row.status,
+        verified: true
+      };
+      
+      res.json(publicData);
+    }
+  );
+});
+
+// Export offer letters
+app.get('/api/offer-letters/export', (req, res) => {
+  db.all('SELECT * FROM offer_letters ORDER BY generated_timestamp DESC', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    const exportData = rows.map(row => {
+      const offerData = JSON.parse(row.offer_data);
+      return {
+        'Offer Letter Number': row.offer_letter_number,
+        'Batch ID': row.batch_id || 'Single',
+        'Generated Date': new Date(row.generated_timestamp).toLocaleDateString(),
+        'Status': row.status,
+        ...offerData
+      };
+    });
+    res.json(exportData);
+  });
+});
+
+// Get offer letter batches
+app.get('/api/offer-letters/batches', (req, res) => {
+  db.all('SELECT * FROM offer_letter_batches ORDER BY generated_timestamp DESC', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   db.get('SELECT COUNT(*) as count FROM employees', (err, row) => {
@@ -1335,4 +1689,76 @@ app.listen(PORT, () => {
   logger.info(`Health check available at http://localhost:${PORT}/api/health`);
   console.log(`Server running on port ${PORT}`);
   console.log(`Health check available at http://localhost:${PORT}/api/health`);
+});
+
+
+// Update offer letter
+app.put('/api/offer-letters/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'Invalid offer letter ID' });
+    }
+    
+    const { offerData, status } = req.body;
+    
+    if (!offerData) {
+      return res.status(400).json({ error: 'Offer data is required' });
+    }
+    
+    db.run(
+      'UPDATE offer_letters SET offer_data = ?, status = ? WHERE id = ?',
+      [JSON.stringify(offerData), status || 'active', id],
+      function(err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Offer letter not found' });
+        }
+        res.json({ message: 'Offer letter updated successfully' });
+      }
+    );
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete offer letter
+app.delete('/api/offer-letters/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid offer letter ID' });
+  }
+  
+  db.run('DELETE FROM offer_letters WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Offer letter not found' });
+    }
+    res.json({ message: 'Offer letter deleted successfully' });
+  });
+});
+
+// Get single offer letter by ID
+app.get('/api/offer-letters/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid offer letter ID' });
+  }
+  
+  db.get('SELECT * FROM offer_letters WHERE id = ?', [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (!row) {
+      return res.status(404).json({ error: 'Offer letter not found' });
+    }
+    res.json({
+      ...row,
+      offer_data: JSON.parse(row.offer_data)
+    });
+  });
 });
