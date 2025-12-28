@@ -140,7 +140,7 @@ const BulkUpload = () => {
               pan_number: row['PAN Number']
             };
 
-            await axios.post('http://localhost:5000/api/employees', employeeData);
+            await axios.post('/api/employees', employeeData);
             uploadResults.success++;
           } catch (error) {
             uploadResults.failed++;

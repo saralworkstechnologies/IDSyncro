@@ -24,7 +24,7 @@ const CertificateHome = () => {
   const exportCertificates = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/certificates/export');
+      const response = await axios.get('/api/certificates/export');
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Certificates');
       

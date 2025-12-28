@@ -36,7 +36,7 @@ const CreateOfferLetter = () => {
     
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/offer-letters/create-single', {
+      const response = await axios.post('/api/offer-letters/create-single', {
         offerData: formData
       });
       

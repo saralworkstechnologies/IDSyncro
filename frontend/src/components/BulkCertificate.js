@@ -24,7 +24,7 @@ const BulkCertificate = () => {
     formData.append('excel', file);
     
     try {
-      const response = await axios.post('http://localhost:5000/api/certificates/upload-excel', formData);
+      const response = await axios.post('/api/certificates/upload-excel', formData);
       setExcelData(response.data);
       setStep(2);
     } catch (error) {
@@ -76,7 +76,7 @@ const BulkCertificate = () => {
   const generateCertificates = async () => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/certificates/create-bulk', {
+      const response = await axios.post('/api/certificates/create-bulk', {
         schema,
         excelData: excelData.data,
         excelHash: excelData.excelHash

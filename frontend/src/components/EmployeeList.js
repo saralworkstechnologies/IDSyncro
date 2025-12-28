@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import IDCardViewer from './IDCardViewer';
 import { useToast } from './Toast';
+import { buildApiUrl, UPLOADS_BASE_URL } from '../config';
 
 // Load jsPDF
 if (typeof window !== 'undefined' && !window.jspdf) {
@@ -66,7 +67,7 @@ const EmployeeList = () => {
 
   const fetchAllEmployees = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/employees');
+      const response = await axios.get('/api/employees');
       const employees = response.data || [];
       setAllEmployees(employees);
       setFilteredEmployees(employees);
@@ -192,7 +193,7 @@ const EmployeeList = () => {
   };
 
   const downloadIdCard = (id) => {
-    window.open(`http://localhost:5000/api/id-card/${id}`, '_blank');
+    window.open(buildApiUrl(`/api/id-card/${id}`), '_blank');
   };
 
   const clearFilters = () => {
@@ -212,7 +213,7 @@ const EmployeeList = () => {
 
   const handlePrintSingle = async (employee) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/print-pdf/${employee.id}`);
+      const response = await axios.get(`/api/print-pdf/${employee.id}`);
       generatePDF([response.data], employee.name);
     } catch (error) {
       console.error('Error fetching employee data:', error);
@@ -227,7 +228,7 @@ const EmployeeList = () => {
     }
     
     try {
-      const response = await axios.post('http://localhost:5000/api/print-pdf-bulk', { ids: selectedIds });
+      const response = await axios.post('/api/print-pdf-bulk', { ids: selectedIds });
       // Generate single PDF with all employees
       generatePDF(response.data, 'Bulk_Employee_IDs');
     } catch (error) {
@@ -275,7 +276,7 @@ const EmployeeList = () => {
         // Add photo if available
         if (employee.photo) {
           try {
-            doc.addImage(`http://localhost:5000/uploads/${employee.photo}`, 'JPEG', 150, 50, 40, 40);
+            doc.addImage(`${UPLOADS_BASE_URL}/${employee.photo}`, 'JPEG', 150, 50, 40, 40);
           } catch (error) {
             console.log('Could not add photo to PDF');
           }
@@ -311,7 +312,7 @@ const EmployeeList = () => {
       setLoading(true);
       console.log('Sending bulk status update:', { employeeIds: selectedIds, status: newStatus });
       
-      const response = await axios.patch('http://localhost:5000/api/bulk-status-update', {
+      const response = await axios.patch('/api/bulk-status-update', {
         employeeIds: selectedIds,
         status: newStatus
       });
@@ -339,7 +340,7 @@ const EmployeeList = () => {
 
     try {
       setLoading(true);
-      const response = await axios.patch('http://localhost:5000/api/bulk-type-update', {
+      const response = await axios.patch('/api/bulk-type-update', {
         employeeIds: selectedIds,
         type: newType
       });
@@ -704,7 +705,7 @@ const EmployeeList = () => {
             )}
             {employee.photo ? (
               <img 
-                src={`http://localhost:5000/uploads/${employee.photo}`}
+                src={`${UPLOADS_BASE_URL}/${employee.photo}`}
                 alt={employee.name}
                 className="employee-photo-simple"
               />
@@ -786,7 +787,7 @@ const EmployeeList = () => {
                   <div className="employee-photo-section">
                     {selectedEmployee.photo ? (
                       <img 
-                        src={`http://localhost:5000/uploads/${selectedEmployee.photo}`}
+                        src={`${UPLOADS_BASE_URL}/${selectedEmployee.photo}`}
                         alt={selectedEmployee.name}
                         className="employee-photo"
                       />

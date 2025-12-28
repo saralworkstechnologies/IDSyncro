@@ -22,7 +22,7 @@ const ManageOfferLetters = () => {
   const fetchOfferLetters = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/offer-letters');
+      const response = await axios.get('/api/offer-letters');
       setOfferLetters(response.data);
     } catch (error) {
       toast.error('Failed to fetch offer letters');
@@ -33,7 +33,7 @@ const ManageOfferLetters = () => {
 
   const fetchBatches = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/offer-letters/batches');
+      const response = await axios.get('/api/offer-letters/batches');
       setBatches(response.data);
     } catch (error) {
       console.error('Error fetching batches:', error);
@@ -54,7 +54,7 @@ const ManageOfferLetters = () => {
   const handleUpdate = async () => {
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/offer-letters/${editModal.id}`, {
+      await axios.put(`/api/offer-letters/${editModal.id}`, {
         offerData: editModal.offer_data,
         status: editModal.status
       });
@@ -73,7 +73,7 @@ const ManageOfferLetters = () => {
     
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:5000/api/offer-letters/${id}`);
+      await axios.delete(`/api/offer-letters/${id}`);
       toast.success('Offer letter deleted successfully');
       fetchOfferLetters();
     } catch (error) {
@@ -86,7 +86,7 @@ const ManageOfferLetters = () => {
   const exportToExcel = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/offer-letters/export');
+      const response = await axios.get('/api/offer-letters/export');
       const data = response.data;
 
       const workbook = new ExcelJS.Workbook();

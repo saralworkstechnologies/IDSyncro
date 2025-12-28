@@ -59,10 +59,12 @@ const {
 const xlsx = require('xlsx');
 
 const app = express();
-const PORT = parseInt(process.env.PORT, 10) || 5000;
+const PORT = parseInt(process.env.PORT, 10) || 9091;
+const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || 'http://localhost:9090';
 const DEFAULT_CORS_ORIGINS = [
-  'http://localhost:3000',
-  'https://idsyncro.saralworkstechnologies.info'
+  'http://localhost:9090',
+  'https://idsyncro.saralworkstechnologies.info',
+  'https://verify.idsyncro.saralworkstechnologies.info'
 ];
 const configuredOrigins = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS;
 const ALLOWED_CORS_ORIGINS = configuredOrigins
@@ -304,7 +306,7 @@ async function generateIdNumber(type) {
 
 // Generate QR Code
 async function generateQRCode(employeeId, uuid) {
-  const verifyUrl = `http://localhost:3000/verify/${uuid}`;
+  const verifyUrl = `${FRONTEND_BASE_URL}/verify/${uuid}`;
   const qrCodeDataUrl = await QRCode.toDataURL(verifyUrl, {
     width: 200,
     margin: 2,

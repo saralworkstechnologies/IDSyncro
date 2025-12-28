@@ -79,7 +79,7 @@ A comprehensive web application for organizations to design, issue, and verify I
    ```bash
    npm run dev
    ```
-      Server will run on http://localhost:5000
+      Server will run on http://localhost:9091
 
 ### Frontend Setup
 1. Navigate to frontend directory:
@@ -96,7 +96,7 @@ A comprehensive web application for organizations to design, issue, and verify I
    ```bash
    npm start
    ```
-   Frontend will run on http://localhost:3000
+   Frontend will run on http://localhost:9090
 
 ### Authentication & Subdomains
 - The admin portal now requires a JWT login. Use the credentials defined by `ADMIN_EMAIL`/`ADMIN_PASSWORD` (defaults are `admin@idsyncro.local` / `ChangeMe123!`, update them in `.env`).
@@ -104,7 +104,7 @@ A comprehensive web application for organizations to design, issue, and verify I
 - Plan two deployments if you want branded subdomains:
    - `id.saralworkstechnologies.info` → full portal (requires login)
    - `verify.saralworkstechnologies.info` → renders only the Verify page and hides the navigation bar
-- Both subdomains can point to the same backend API; update `REACT_APP_API_URL` in the frontend build if the API is not on `http://localhost:5000`.
+- Both subdomains can point to the same backend API; update `REACT_APP_API_URL` in the frontend build if the API is not on `http://localhost:9091`.
 
 ## Usage
 
@@ -140,7 +140,7 @@ A comprehensive web application for organizations to design, issue, and verify I
 5. View batch statistics
 
 ### Verifying Offer Letters
-1. Go to "Verify ID" page (http://localhost:3000/verify)
+1. Go to "Verify ID" page (http://localhost:9090/verify)
 2. Select "Offer Letter" tab
 3. Enter offer letter number
 4. View public information (company, designation, validity)
@@ -198,7 +198,7 @@ A comprehensive web application for organizations to design, issue, and verify I
 ## QR Code Integration
 
 Each ID includes a QR code that contains:
-- Verification URL: `http://localhost:3000/verify/{UUID}`
+- Verification URL: `http://localhost:9090/verify/{UUID}`
 - Direct access to verification page
 - Real-time status checking
 

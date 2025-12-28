@@ -32,7 +32,7 @@ const BulkOfferLetter = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/offer-letters/upload-excel', formData, {
+      const response = await axios.post('/api/offer-letters/upload-excel', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -48,7 +48,7 @@ const BulkOfferLetter = () => {
 
   const fetchStagedData = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/offer-letters/staging');
+      const response = await axios.get('/api/offer-letters/staging');
       setStagedData(response.data);
     } catch (error) {
       console.error('Error fetching staged data:', error);
@@ -63,7 +63,7 @@ const BulkOfferLetter = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/offer-letters/generate', generationSettings);
+      const response = await axios.post('/api/offer-letters/generate', generationSettings);
       setGenerationResult(response.data);
       toast.success(response.data.message);
       setStagedData([]);

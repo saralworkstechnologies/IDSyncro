@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { UPLOADS_BASE_URL } from '../config';
 
 const IDCardViewer = ({ employee, onClose }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -15,7 +16,7 @@ const IDCardViewer = ({ employee, onClose }) => {
   const fetchLatestData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/employees/${employee.id}`);
+      const response = await axios.get(`/api/employees/${employee.id}`);
       setCurrentEmployee(response.data);
     } catch (error) {
       console.error('Error fetching latest employee data:', error);
@@ -48,7 +49,7 @@ const IDCardViewer = ({ employee, onClose }) => {
               <div className="id-card-content">
                 {displayEmployee.photo ? (
                   <img 
-                    src={`http://localhost:5000/uploads/${displayEmployee.photo}`}
+                    src={`${UPLOADS_BASE_URL}/${displayEmployee.photo}`}
                     alt={displayEmployee.name}
                     className="id-card-photo"
                   />

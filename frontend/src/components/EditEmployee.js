@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { validateField, formatInput, getPanPlaceholder } from '../utils/validation';
 import { useToast } from './Toast';
+import { UPLOADS_BASE_URL } from '../config';
 
 const EditEmployee = () => {
   const { id } = useParams();
@@ -43,7 +44,7 @@ const EditEmployee = () => {
 
   const fetchEmployee = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/employees/${id}`);
+      const response = await axios.get(`/api/employees/${id}`);
       const employee = response.data;
       setFormData({
         name: employee.name,
@@ -69,7 +70,7 @@ const EditEmployee = () => {
       });
       if (employee.photo) {
         setExistingPhoto(employee.photo);
-        setPreview(`http://localhost:5000/uploads/${employee.photo}`);
+        setPreview(`${UPLOADS_BASE_URL}/${employee.photo}`);
       }
     } catch (error) {
       console.error('Error fetching employee:', error);
@@ -174,7 +175,7 @@ const EditEmployee = () => {
     }
 
     try {
-      await axios.put(`http://localhost:5000/api/employees/${id}`, submitData, {
+      await axios.put(`/api/employees/${id}`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

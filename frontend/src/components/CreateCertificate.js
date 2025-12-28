@@ -25,7 +25,7 @@ const CreateCertificate = () => {
     setLoading(true);
     
     try {
-      const response = await axios.post('http://localhost:5000/api/certificates/create-single', {
+      const response = await axios.post('/api/certificates/create-single', {
         certificateData: formData
       });
       

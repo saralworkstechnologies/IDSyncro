@@ -21,7 +21,7 @@ const ProfessionalDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/employees');
+      const response = await axios.get('/api/employees');
       const employeeData = response.data;
       setEmployees(employeeData);
       
@@ -143,7 +143,7 @@ const ProfessionalDashboard = () => {
   const exportCertificates = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/certificates/export');
+      const response = await axios.get('/api/certificates/export');
       const certData = response.data.map(cert => {
         const parsedData = JSON.parse(cert.certificate_data);
         return {
@@ -169,7 +169,7 @@ const ProfessionalDashboard = () => {
   const exportOfferLetters = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/offer-letters/export');
+      const response = await axios.get('/api/offer-letters/export');
       const offerData = response.data;
       exportToExcel(offerData, 'Offer_Letters_Report');
     } catch (error) {

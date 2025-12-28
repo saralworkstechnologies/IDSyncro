@@ -12,7 +12,7 @@ const ManageCertificates = () => {
 
   const fetchCertificates = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/certificates');
+      const response = await axios.get('/api/certificates');
       setCertificates(response.data);
     } catch (error) {
       console.error('Failed to fetch certificates:', error);
@@ -28,7 +28,7 @@ const ManageCertificates = () => {
     if (!reason) return;
     
     try {
-      await axios.post(`http://localhost:5000/api/certificates/revoke/${id}`, { reason });
+      await axios.post(`/api/certificates/revoke/${id}`, { reason });
       alert('Certificate revoked successfully');
       fetchCertificates();
     } catch (error) {
