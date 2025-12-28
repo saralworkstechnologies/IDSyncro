@@ -4,7 +4,7 @@
 
 ### Backend Dependencies ✓
 - express ✓
-- sqlite3 ✓
+- mongoose ✓
 - multer ✓
 - uuid ✓
 - qrcode ✓
@@ -19,11 +19,12 @@
 - exceljs ✓
 - file-saver ✓
 
-### Database Tables ✓
+### Database Collections ✓
 1. employees (existing) ✓
-2. id_counters (existing) ✓
+2. counters (sequence tracking) ✓
 3. certificates (new) ✓
 4. certificate_batches (new) ✓
+5. offer_letter_staging (new) ✓
 
 ### API Endpoints ✓
 

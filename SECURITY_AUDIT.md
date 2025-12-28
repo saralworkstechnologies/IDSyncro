@@ -119,9 +119,9 @@ app.use(cors({
    - Protect sensitive endpoints
 
 4. **Database**
-   - Use PostgreSQL/MySQL in production (not SQLite)
-   - Enable database encryption at rest
-   - Regular backups
+   - Lock down MongoDB Atlas IP allowlists and TLS
+   - Enable Atlas encryption at rest (default) and add field-level encryption if required
+   - Configure automated backups and retention policies
 
 ### Important (Should Do)
 5. **Logging & Monitoring**
@@ -174,7 +174,7 @@ app.use(cors({
 - [x] Sensitive data filtering
 - [x] Cryptographic hashing
 - [x] Secure random generation
-- [ ] Encryption at rest (SQLite limitation)
+- [ ] Encryption at rest (Atlas tier dependent)
 - [ ] Encryption in transit (HTTPS in production)
 
 ### Infrastructure Security

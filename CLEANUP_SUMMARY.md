@@ -67,7 +67,7 @@ IDSyncro/
 │   └── README.md
 ├── uploads/
 │   └── .gitkeep (preserves directory)
-├── idsyncro.db (production database)
+├── idsyncro.db (legacy SQLite snapshot)
 ├── server.js (main backend)
 ├── validationUtils.js (validation logic)
 ├── package.json (backend dependencies)
@@ -99,8 +99,9 @@ IDSyncro/
 ## Next Steps
 
 1. **Install Dependencies**: Run `npm install` in both root and frontend directories
-2. **Start Backend**: `npm run dev` (runs on port 5000)
-3. **Start Frontend**: `cd frontend && npm start` (runs on port 3000)
-4. **Verify System**: Access http://localhost:3000
+2. **Configure Environment**: Create a `.env` with `MONGODB_URI` (and optional overrides) pointing to your Atlas cluster
+3. **Start Backend**: `npm run dev` (runs on port 5000)
+4. **Start Frontend**: `cd frontend && npm start` (runs on port 3000)
+5. **Verify System**: Access http://localhost:3000
 
 The IDSyncro system is now clean, optimized, and ready for production use!

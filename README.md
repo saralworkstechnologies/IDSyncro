@@ -43,7 +43,7 @@ A comprehensive web application for organizations to design, issue, and verify I
 
 ### Backend
 - Node.js with Express
-- SQLite database
+- MongoDB Atlas via Mongoose
 - Multer for file uploads
 - QRCode generation
 - Canvas for image processing
@@ -67,7 +67,12 @@ A comprehensive web application for organizations to design, issue, and verify I
    npm install
    ```
 
-3. Start the backend server:
+3. Configure environment variables:
+   - Create a `.env` file in the project root
+   - Set `MONGODB_URI` to your MongoDB Atlas connection string
+   - Optionally set `PORT`, `CORS_ORIGIN`, and other overrides referenced in `server.js`
+
+4. Start the backend server:
    ```bash
    npm run dev
    ```

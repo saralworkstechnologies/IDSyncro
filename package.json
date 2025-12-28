@@ -4,27 +4,27 @@
   "description": "IDSyncro - ID Card Management Backend",
   "main": "server.js",
   "scripts": {
-    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend\"",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "backend": "node server.js",
     "backend:dev": "nodemon server.js",
     "frontend": "npm --prefix frontend start"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
+    "mongoose": "^8.8.0",
     "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.1",
     "qrcode": "^1.5.3",
-    "sqlite3": "^5.1.6",
     "uuid": "^9.0.0",
     "winston": "^3.19.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11",
-    "concurrently": "^9.0.1"
+    "nodemon": "^3.1.11"
   }
 }
