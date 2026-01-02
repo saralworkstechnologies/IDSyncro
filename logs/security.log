@@ -12,3 +12,5 @@
 {"email":"admin@idsyncro.local","level":"warn","message":"Failed login attempt","requestId":"13030374-0cee-42f6-b15f-726f720f80a4","timestamp":"2025-12-28 23:09:56"}
 {"email":"admin@idsyncro.local","level":"warn","message":"Failed login attempt","requestId":"4b9f6fad-56a7-42e9-ba0a-95d42b2950e6","timestamp":"2025-12-28 23:09:56"}
 {"level":"warn","message":"Default admin credentials are in use. Update ADMIN_EMAIL and ADMIN_PASSWORD in your .env file.","timestamp":"2025-12-28 23:10:37"}
+{"level":"warn","message":"Default admin credentials are in use. Update ADMIN_EMAIL and ADMIN_PASSWORD in your .env file.","timestamp":"2025-12-29 22:09:58"}
+{"level":"warn","message":"Default admin credentials are in use. Update ADMIN_EMAIL and ADMIN_PASSWORD in your .env file.","timestamp":"2025-12-29 22:12:48"}
