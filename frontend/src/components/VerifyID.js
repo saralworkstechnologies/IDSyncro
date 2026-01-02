@@ -559,7 +559,7 @@ const VerifyID = () => {
                         VERIFIED BY
                       </div>
                       <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>
-                        IDSyncro System
+                        SaralWorks System
                       </div>
                     </div>
                   </div>
@@ -584,20 +584,6 @@ const VerifyID = () => {
                           </div>
                           <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
                             {verificationData.candidate_name || verificationData.name || 'N/A'}
-                          </div>
-                        </div>
-                        
-                        <div style={{ 
-                          backgroundColor: '#F9FAFB', 
-                          padding: '1rem',
-                          borderRadius: '8px',
-                          border: '1px solid #E5E7EB'
-                        }}>
-                          <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
-                            COMPANY NAME
-                          </div>
-                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                            {verificationData.company_name || 'N/A'}
                           </div>
                         </div>
                         
@@ -636,14 +622,10 @@ const VerifyID = () => {
                           border: '1px solid #E5E7EB'
                         }}>
                           <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
-                            ISSUE DATE
+                            ISSUE YEAR
                           </div>
                           <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                            {new Date(verificationData.issue_date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
+                            {verificationData.issue_year || 'N/A'}
                           </div>
                         </div>
                       </>
@@ -746,14 +728,10 @@ const VerifyID = () => {
                           border: '1px solid #E5E7EB'
                         }}>
                           <div style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: '500', marginBottom: '0.25rem' }}>
-                            ISSUE DATE
+                            ISSUE YEAR
                           </div>
                           <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                            {new Date(verificationData.issue_date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
+                            {verificationData.issue_year || 'N/A'}
                           </div>
                         </div>
                       </>
@@ -906,11 +884,11 @@ const VerifyID = () => {
                 }}>
                   <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>V</span>
                 </div>
-                <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>IDSyncro</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>SaralWorks</span>
               </div>
               <p style={{ fontSize: '0.875rem', color: '#D1D5DB', lineHeight: '1.6', margin: '0 0 1rem 0' }}>
                 Secure and reliable verification system for employee credentials and certificates. 
-                ISO 9001:2015 certified platform ensuring authenticity and trust.
+                Trusted by organizations worldwide for authentic document verification.
               </p>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <span style={{ 
@@ -1050,15 +1028,32 @@ const VerifyID = () => {
                 Support
               </h3>
               <div style={{ marginBottom: '1rem' }}>
-                <p style={{ fontSize: '0.875rem', color: '#D1D5DB', margin: '0 0 0.5rem 0' }}>
-                  📧 Email: support@idsyncro.com
-                </p>
-                <p style={{ fontSize: '0.875rem', color: '#D1D5DB', margin: '0 0 0.5rem 0' }}>
-                  📞 Phone: +1 (555) 123-4567
-                </p>
-                <p style={{ fontSize: '0.875rem', color: '#D1D5DB', margin: '0 0 0.5rem 0' }}>
-                  🕐 Mon-Fri: 9:00 AM - 6:00 PM
-                </p>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  <span style={{ fontSize: '0.875rem' }}>📧</span>
+                  <span style={{ fontSize: '0.875rem', color: '#D1D5DB' }}>support@saralworkstechnologies.info</span>
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  <span style={{ fontSize: '0.875rem' }}>📞</span>
+                  <span style={{ fontSize: '0.875rem', color: '#D1D5DB' }}>+91 (555) 123-4567</span>
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <span style={{ fontSize: '0.875rem' }}>🕐</span>
+                  <span style={{ fontSize: '0.875rem', color: '#D1D5DB' }}>Mon-Fri: 9:00 AM - 6:00 PM IST</span>
+                </div>
               </div>
               <div style={{ 
                 padding: '0.75rem',
@@ -1070,7 +1065,7 @@ const VerifyID = () => {
                   REPORT FRAUD
                 </p>
                 <p style={{ fontSize: '0.75rem', color: '#D1D5DB', margin: 0 }}>
-                  fraud@idsyncro.com
+                  fraud@saralworkstechnologies.info
                 </p>
               </div>
             </div>
@@ -1124,10 +1119,10 @@ const VerifyID = () => {
             gap: '1rem'
           }}>
             <p style={{ fontSize: '0.75rem', color: '#9CA3AF', margin: 0 }}>
-              © {new Date().getFullYear()} IDSyncro Verification System. All rights reserved. v2.1.0
+              © {new Date().getFullYear()} SaralWorks Technologies. All rights reserved.
             </p>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>Powered by IDSyncro</span>
+              <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>Powered by SaralWorks Technologies</span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <a href="#" style={{ 
                   width: '32px',

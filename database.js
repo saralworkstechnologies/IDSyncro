@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const DEFAULT_DB_NAME = 'idsyncro';
+const DEFAULT_DB_NAME = 'swid';
 
 mongoose.set('strictQuery', true);
 

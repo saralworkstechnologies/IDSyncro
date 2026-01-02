@@ -425,6 +425,7 @@ const EmployeeList = () => {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <Link to="/create" className="btn btn-primary">Create New ID</Link>
               <Link to="/bulk-upload" className="btn btn-secondary">📤 Bulk Upload</Link>
+              <Link to="/employees?print=true" className="btn btn-secondary">🖨️ Print ID Card</Link>
             </div>
           )}
         </div>

@@ -32,7 +32,7 @@ function log(level, message, data = null) {
   logger[level](logData);
 }
 
-const DEFAULT_ADMIN_EMAIL = 'admin@idsyncro.local';
+const DEFAULT_ADMIN_EMAIL = 'admin@saralworkstechnologies.info';
 const DEFAULT_ADMIN_PASSWORD = 'ChangeMe123!';
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).toLowerCase();
@@ -65,7 +65,7 @@ const VERIFY_PORTAL_BASE_URL = process.env.VERIFY_PORTAL_BASE_URL || FRONTEND_BA
 const NORMALIZED_VERIFY_PORTAL_URL = VERIFY_PORTAL_BASE_URL.replace(/\/$/, '');
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:9090',
-  'https://idsyncro.saralworkstechnologies.info',
+  'https://swid.saralworkstechnologies.info',
   'https://verify.saralworkstechnologies.info'
 ];
 const configuredOrigins = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS;
@@ -593,10 +593,8 @@ app.get('/api/verify/:uuid', async (req, res) => {
       name: employee.name,
       employee_id: employee.employee_id,
       designation: employee.designation,
-      department: employee.department,
+      department: employee.department ? employee.department.substring(0, 3).toUpperCase() : 'N/A',
       type: employee.type,
-      photo: employee.photo,
-      created_at: employee.created_at,
       status: employee.status
     };
 
@@ -1232,14 +1230,16 @@ app.get('/api/certificates/verify/:identifier', async (req, res) => {
 
     const publicData = certificates.map(cert => {
       const certData = JSON.parse(cert.certificate_data || '{}');
+      const issueYear = new Date(cert.issue_date).getFullYear();
       return {
         certificate_code: cert.certificate_code,
         name: cert.name,
         certificate_type: cert.certificate_type,
-        issue_date: cert.issue_date,
+        issue_year: issueYear,
         status: cert.status,
         verified: true,
-        ...certData
+        domain: certData.domain,
+        technology: certData.technology
       };
     });
 
@@ -1515,10 +1515,9 @@ app.get('/api/offer-letters/verify/:offerNumber', async (req, res) => {
     const publicData = {
       offer_letter_number: row.offer_letter_number,
       candidate_name: offerData.candidate_name || offerData['Candidate Name'] || offerData.name || 'N/A',
-      company_name: offerData.company_name || offerData.Company || offerData['Company Name'] || 'N/A',
       designation: offerData.designation || offerData.Designation || 'N/A',
       validity_period: offerData.validity_period || offerData['Validity Period'] || 'N/A',
-      issue_date: offerData.issue_date || row.generated_timestamp,
+      issue_year: new Date(offerData.issue_date || row.generated_timestamp).getFullYear(),
       status: row.status,
       verified: true
     };

@@ -195,15 +195,13 @@ const ProfessionalDashboard = () => {
     { label: 'Manage IDs', path: '/employees', icon: '👤', color: '#2980b9' },
     { label: 'Certificates', path: '/certificates', icon: '📜', color: '#16a085' },
     { label: 'Offer Letters', path: '/offer-letters', icon: '📄', color: '#f39c12' },
-    { label: 'Print ID Card', path: '/employees?print=true', icon: '🖨️', color: '#e74c3c' },
-    { label: 'Verify ID', externalUrl: buildVerifyPortalUrl('/verify'), icon: '✅', color: '#8e44ad' },
-    { label: 'Bulk Upload', path: '/bulk-upload', icon: '📤', color: '#d35400' }
+    { label: 'Verify ID', path: '/verify', icon: '✅', color: '#8e44ad' }
   ];
 
   return (
     <div className="professional-dashboard">
       <div className="dashboard-header">
-        <h1>🏢 IDSyncro ID Management System</h1>
+        <h1>🏢 SaralWorks ID Management System</h1>
         <p>Professional Employee ID Card & Certificate Management Platform</p>
       </div>
 
@@ -339,7 +337,7 @@ const ProfessionalDashboard = () => {
               <li>Professional design</li>
               <li>Auto-generated IDs</li>
               <li>QR code integration</li>
-              <li>Print-ready format</li>
+              <li>Digital verification</li>
             </ul>
           </div>
           <div className="function-card">
@@ -348,7 +346,7 @@ const ProfessionalDashboard = () => {
               <li>Real-time statistics</li>
               <li>Monthly reports</li>
               <li>Export capabilities</li>
-              <li>Data visualization</li>
+              <li>Data insights</li>
             </ul>
           </div>
           <div className="function-card">

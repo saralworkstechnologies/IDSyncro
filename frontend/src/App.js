@@ -42,7 +42,7 @@ function Navigation({ onLogout }) {
   return (
     <nav className="navbar">
       <Link to="/" className="nav-brand" onClick={closeMobileMenu}>
-        <h2>IDSyncro</h2>
+        <h2>SWID</h2>
       </Link>
       
       <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
@@ -54,15 +54,9 @@ function Navigation({ onLogout }) {
         <Link to="/employees" className={isActive('/employees')} onClick={closeMobileMenu}>Manage IDs</Link>
         <Link to="/certificates" className={isActive('/certificates')} onClick={closeMobileMenu}>Certificates</Link>
         <Link to="/offer-letters" className={isActive('/offer-letters')} onClick={closeMobileMenu}>Offer Letters</Link>
-        <a
-          href={verifyPortalUrl}
-          className={isActive('/verify')}
-          onClick={closeMobileMenu}
-          target="_blank"
-          rel="noreferrer"
-        >
+        <Link to="/verify" className={isActive('/verify')} onClick={closeMobileMenu}>
           Verify ID
-        </a>
+        </Link>
         <button type="button" className="logout-button" onClick={handleLogout}>
           Logout
         </button>
@@ -74,12 +68,22 @@ function VerifyPortalRedirect() {
   const location = useLocation();
 
   useEffect(() => {
+    // Only redirect if not on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return; // Stay on localhost, don't redirect
+    }
+    
     const targetPath = location.pathname.startsWith('/verify') ? location.pathname : '/verify';
     const targetUrl = buildVerifyPortalUrl(`${targetPath}${location.search || ''}${location.hash || ''}`);
     if (typeof window !== 'undefined' && window.location.href !== targetUrl) {
       window.location.replace(targetUrl);
     }
   }, [location]);
+
+  // On localhost, render VerifyID component instead of redirecting
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return <VerifyID />;
+  }
 
   return (
     <div className="verify-redirect" style={{ padding: '2rem', textAlign: 'center' }}>

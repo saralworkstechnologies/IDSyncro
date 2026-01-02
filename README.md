@@ -1,4 +1,4 @@
-# IDSyncro ID Management System
+# SaralWorks ID Management System
 
 A comprehensive web application for organizations to design, issue, and verify ID cards and certificates.
 
@@ -59,7 +59,7 @@ A comprehensive web application for organizations to design, issue, and verify I
 ### Backend Setup
 1. Navigate to the root directory:
    ```bash
-   cd IDSyncro
+   cd SWID
    ```
 
 2. Install dependencies:
@@ -71,7 +71,7 @@ A comprehensive web application for organizations to design, issue, and verify I
    - Create a `.env` file in the project root
    - Set `MONGODB_URI` to your MongoDB Atlas connection string
    - Set `ADMIN_EMAIL` to the email that is allowed to access the admin portal
-    - Set `ADMIN_PASSWORD` to the plaintext password that should unlock the admin portal (change the defaults from `admin@idsyncro.local` / `ChangeMe123!`)
+    - Set `ADMIN_PASSWORD` to the plaintext password that should unlock the admin portal (change the defaults from `admin@saralworkstechnologies.info` / `ChangeMe123!`)
    - Set `JWT_SECRET` to a long random string used to sign session tokens
    - Optionally set `JWT_EXPIRY`, `PORT`, `CORS_ORIGIN`, and other overrides referenced in `server.js`
    - Set `VERIFY_PORTAL_BASE_URL` to the fully qualified verification portal domain (e.g., `https://verify.saralworkstechnologies.info`) so generated QR codes and email links always target the public site
@@ -104,7 +104,7 @@ A comprehensive web application for organizations to design, issue, and verify I
    Frontend will run on http://localhost:9090
 
 ### Authentication & Subdomains
-- The admin portal now requires a JWT login. Use the credentials defined by `ADMIN_EMAIL`/`ADMIN_PASSWORD` (defaults are `admin@idsyncro.local` / `ChangeMe123!`, update them in `.env`).
+- The admin portal now requires a JWT login. Use the credentials defined by `ADMIN_EMAIL`/`ADMIN_PASSWORD` (defaults are `admin@saralworkstechnologies.info` / `ChangeMe123!`, update them in `.env`).
 - Verification endpoints remain public so the `/verify` page and external scanners continue to work without signing in.
 - Plan two deployments if you want branded subdomains:
    - `id.saralworkstechnologies.info` → full portal (requires login)
