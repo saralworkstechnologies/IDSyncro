@@ -47,6 +47,8 @@ const employeeSchema = new mongoose.Schema({
   versionKey: false
 });
 
+
+
 employeeSchema.index({ type: 1 });
 employeeSchema.index({ status: 1 });
 employeeSchema.index({ department: 1 });
