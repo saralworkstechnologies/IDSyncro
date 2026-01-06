@@ -11,8 +11,8 @@ function resolveDefaultApiBaseUrl() {
     return 'http://localhost:5000';
   }
 
-  if (window.__IDSYNCRO_API_URL__) {
-    return window.__IDSYNCRO_API_URL__;
+  if (window.__SWID_API_URL__) {
+    return window.__SWID_API_URL__;
   }
 
   const { protocol, hostname, host } = window.location;
@@ -33,8 +33,8 @@ function resolveVerifyPortalBaseUrl() {
     return 'http://localhost:9090';
   }
 
-  if (window.__IDSYNCRO_VERIFY_URL__) {
-    return window.__IDSYNCRO_VERIFY_URL__;
+  if (window.__SWID_VERIFY_URL__) {
+    return window.__SWID_VERIFY_URL__;
   }
 
   const { protocol, host, hostname } = window.location;
