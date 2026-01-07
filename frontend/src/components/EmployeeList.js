@@ -393,25 +393,29 @@ const EmployeeList = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h1>{getPageTitle()}</h1>
+      <div className="employee-page-header">
+        <div className="employee-header-top">
+          <div className="employee-header-title">
+            <h1>{getPageTitle()}</h1>
+          </div>
           {printMode ? (
-            <button 
-              onClick={handlePrintSelected}
-              className="btn btn-primary"
-              disabled={selectedIds.length === 0}
-            >
-              🖨️ Print Selected ({selectedIds.length})
-            </button>
+            <div className="employee-header-actions">
+              <button 
+                onClick={handlePrintSelected}
+                className="btn btn-primary"
+                disabled={selectedIds.length === 0}
+              >
+                🖨️ Print Selected ({selectedIds.length})
+              </button>
+            </div>
           ) : servicesMode ? (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="employee-header-actions">
               <button 
                 onClick={() => setShowTypeModal(true)}
                 className="btn btn-secondary"
                 disabled={selectedIds.length === 0}
               >
-                🔄 Change Employee Type ({selectedIds.length})
+                🔄 Change Type ({selectedIds.length})
               </button>
               <button 
                 onClick={() => setShowStatusModal(true)}
@@ -422,7 +426,7 @@ const EmployeeList = () => {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="employee-header-actions">
               <Link to="/create" className="btn btn-primary">Create New ID</Link>
               <Link to="/bulk-upload" className="btn btn-secondary">📤 Bulk Upload</Link>
               <Link to="/employees?print=true" className="btn btn-secondary">🖨️ Print ID Card</Link>
@@ -430,33 +434,21 @@ const EmployeeList = () => {
           )}
         </div>
         
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '250px' }}>
-            <input
-              type="text"
-              placeholder="🔍 Search by name, ID, department..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ padding: '0.5rem', flex: 1, border: '2px solid #ddd', borderRadius: '5px' }}
-            />
-            <button 
-              onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
-              style={{ 
-                padding: '0.5rem 1rem', 
-                background: showAdvancedFilter ? '#667eea' : '#f0f0f0',
-                color: showAdvancedFilter ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                transition: 'all 0.3s'
-              }}
-              title="Advanced Filters"
-            >
-              ⚙️ Filters {hasActiveFilters && '●'}
-            </button>
-          </div>
-
+        <div className="employee-search-section">
+          <input
+            type="text"
+            placeholder="🔍 Search by name, ID, department..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="employee-search-input"
+          />
+          <button 
+            onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+            className={`filter-toggle-btn ${showAdvancedFilter ? 'active' : ''}`}
+            title="Advanced Filters"
+          >
+            ⚙️ Filters {hasActiveFilters && '●'}
+          </button>
         </div>
 
         {showAdvancedFilter && (

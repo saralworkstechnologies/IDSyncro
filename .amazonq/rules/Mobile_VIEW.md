@@ -1,0 +1,1 @@
+you have to work only on mobile view and mobile responsiveness  
