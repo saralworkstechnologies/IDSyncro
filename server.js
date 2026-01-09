@@ -1024,6 +1024,161 @@ app.patch('/api/bulk-type-update', async (req, res) => {
   }
 });
 
+// Bulk employee upload endpoint (no validation)
+app.post('/api/employees/bulk-upload', (req, res) => {
+  uploadImage.single('photo')(req, res, async (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File too large. Maximum size is 5MB.' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+
+    try {
+      const {
+        name, designation, department, type, employment_type, work_location, email, phone, address,
+        emergency_contact, emergency_phone, date_of_birth, joining_date,
+        salary, bank_account, aadhar_number, pan_number, blood_group, manager
+      } = req.body;
+
+      // Only basic sanitization, no validation
+      const sanitizedData = sanitizeEmployeeData({
+        name, designation, department, type, employment_type, work_location, email, phone, address,
+        emergency_contact, emergency_phone, date_of_birth, joining_date,
+        salary, bank_account, aadhar_number, pan_number, blood_group, manager
+      });
+
+      const uuid = uuidv4();
+      const employeeType = sanitizedData.type || 'employee';
+      const employeeId = await generateIdNumber(employeeType);
+      const numericId = await getNextEmployeeRowId();
+
+      const photo = req.file ? req.file.filename : null;
+      const qrCode = await generateQRCode(employeeId, uuid);
+
+      const employee = await Employee.create({
+        id: numericId,
+        uuid,
+        employee_id: employeeId,
+        name: sanitizedData.name || 'N/A',
+        designation: sanitizedData.designation || 'Employee',
+        department: sanitizedData.department || 'General',
+        type: employeeType,
+        employment_type: sanitizedData.employment_type || 'full_time',
+        work_location: sanitizedData.work_location || 'Head Office',
+        photo,
+        qr_code: qrCode,
+        email: sanitizedData.email || '',
+        phone: sanitizedData.phone || '',
+        address: sanitizedData.address || '',
+        emergency_contact: sanitizedData.emergency_contact || '',
+        emergency_phone: sanitizedData.emergency_phone || '',
+        date_of_birth: sanitizedData.date_of_birth || null,
+        joining_date: sanitizedData.joining_date || null,
+        salary: sanitizedData.salary || '',
+        bank_account: sanitizedData.bank_account || '',
+        aadhar_number: sanitizedData.aadhar_number || '',
+        pan_number: sanitizedData.pan_number || '',
+        blood_group: sanitizedData.blood_group || '',
+        manager: sanitizedData.manager || ''
+      });
+
+      log('info', 'Employee created via bulk upload', {
+        id: employee.id,
+        employeeId,
+        name: sanitizedData.name,
+        requestId: req.requestId
+      });
+
+      res.json({
+        id: employee.id,
+        uuid,
+        employeeId,
+        message: 'Employee created successfully'
+      });
+    } catch (error) {
+      if (error?.code === 11000) {
+        return res.status(409).json({
+          error: 'Employee ID conflict. Please try again.',
+          details: 'Duplicate key detected while saving employee. Retrying will issue a fresh ID.'
+        });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+});
+
+// Bulk employee creation from JSON data (no validation)
+app.post('/api/employees/bulk-create', async (req, res) => {
+  try {
+    const { employees } = req.body;
+
+    if (!employees || !Array.isArray(employees) || employees.length === 0) {
+      return res.status(400).json({ error: 'Employees array is required' });
+    }
+
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: []
+    };
+
+    for (let i = 0; i < employees.length; i++) {
+      const employeeData = employees[i];
+      try {
+        // Only basic sanitization, no validation
+        const sanitizedData = sanitizeEmployeeData(employeeData);
+
+        const uuid = uuidv4();
+        const employeeType = sanitizedData.type || 'employee';
+        const employeeId = await generateIdNumber(employeeType);
+        const numericId = await getNextEmployeeRowId();
+        const qrCode = await generateQRCode(employeeId, uuid);
+
+        await Employee.create({
+          id: numericId,
+          uuid,
+          employee_id: employeeId,
+          name: sanitizedData.name || 'N/A',
+          designation: sanitizedData.designation || 'Employee',
+          department: sanitizedData.department || 'General',
+          type: employeeType,
+          employment_type: sanitizedData.employment_type || 'full_time',
+          work_location: sanitizedData.work_location || 'Head Office',
+          photo: null,
+          qr_code: qrCode,
+          email: sanitizedData.email || '',
+          phone: sanitizedData.phone || '',
+          address: sanitizedData.address || '',
+          emergency_contact: sanitizedData.emergency_contact || '',
+          emergency_phone: sanitizedData.emergency_phone || '',
+          date_of_birth: sanitizedData.date_of_birth || null,
+          joining_date: sanitizedData.joining_date || null,
+          salary: sanitizedData.salary || '',
+          bank_account: sanitizedData.bank_account || '',
+          aadhar_number: sanitizedData.aadhar_number || '',
+          pan_number: sanitizedData.pan_number || '',
+          blood_group: sanitizedData.blood_group || '',
+          manager: sanitizedData.manager || ''
+        });
+
+        results.success++;
+      } catch (error) {
+        results.failed++;
+        results.errors.push(`Row ${i + 1}: ${error.message}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      results,
+      message: `Processed ${employees.length} employees. ${results.success} successful, ${results.failed} failed.`
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============ CERTIFICATE ROUTES ============
 
 // Upload and parse Excel for bulk certificate generation

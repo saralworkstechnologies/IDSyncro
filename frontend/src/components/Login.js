@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
+import '../styles/login.css';
 
 const Login = () => {
   const { login, initializing, isAuthenticated } = useAuth();
@@ -12,6 +13,16 @@ const Login = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const redirectPath = location.state?.from?.pathname || '/';
+
+  useEffect(() => {
+    // Add login-page class to body
+    document.body.classList.add('login-page');
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('login-page');
+    };
+  }, []);
 
   useEffect(() => {
     if (!initializing && isAuthenticated) {
@@ -46,37 +57,43 @@ const Login = () => {
   return (
     <div className="auth-wrapper">
       <div className="auth-card">
-        <h1>Sign in</h1>
-        <p>Enter the admin credentials to continue.</p>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Email
+        <h1>Welcome Back</h1>
+        <p>Sign in to access the SaralWorks ID Management System</p>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
             <input
+              id="email"
               type="email"
               name="email"
               value={formState.email}
               onChange={handleChange}
               required
               autoComplete="username"
-              placeholder="admin@example.com"
+              placeholder="admin@saralworkstechnologies.info"
             />
-          </label>
+          </div>
 
-          <label>
-            Password
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
             <input
+              id="password"
               type="password"
               name="password"
               value={formState.password}
               onChange={handleChange}
               required
               autoComplete="current-password"
-              placeholder="Enter password"
+              placeholder="Enter your password"
             />
-          </label>
+          </div>
 
-          <button type="submit" className="auth-submit-btn" disabled={submitting}>
-            {submitting ? 'Signing in...' : 'Sign in'}
+          <button 
+            type="submit" 
+            className="auth-submit-btn" 
+            disabled={submitting}
+          >
+            {submitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
       </div>

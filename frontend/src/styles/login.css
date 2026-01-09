@@ -1,0 +1,265 @@
+/* =========================================================
+   THEME TOKENS
+   Use <body data-theme="light"> or "dark"
+========================================================= */
+
+:root {
+  /* Typography */
+  --type-body: 14px;
+
+  /* Grid */
+  --grid-8: 8px;
+  --grid-16: 16px;
+  --grid-20: 20px;
+  --grid-24: 24px;
+  --grid-32: 32px;
+
+  /* Motion */
+  --ease-modal: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Input tokens (DO NOT reuse pill tokens) */
+  --input-height: 48px;
+  --input-border-width: 2px;
+  --input-radius: 14px;
+  --input-padding-y: 16px;
+  --input-padding-x: 32px;
+  --input-padding-left: 52px;
+  --input-gap: 20px;
+
+  /* Button */
+  --pill-radius: 999px;
+}
+
+/* ---------- LIGHT THEME ---------- */
+[data-theme="light"] {
+  --bg-page: #f5f7fb;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --glass-bg-strong: rgba(255, 255, 255, 0.85);
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(15, 23, 42, 0.12);
+
+  --primary: #2563eb;
+  --primary-gradient: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+/* ---------- DARK THEME ---------- */
+[data-theme="dark"] {
+  --bg-page: #020617;
+
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  --glass-bg-strong: rgba(15, 23, 42, 0.7);
+  --glass-bg: rgba(15, 23, 42, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.12);
+
+  --primary: #60a5fa;
+  --primary-gradient: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+/* =========================================================
+   BASE / PAGE ISOLATION
+========================================================= */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-page);
+}
+
+body.login-page {
+  overflow: hidden;
+  --safe-top: 0;
+  --safe-bottom: 0;
+}
+
+/* Hide global fixed buttons on login */
+body.login-page .btn-primary-action,
+body.login-page .submit-btn,
+body.login-page .upload-btn,
+body.login-page .verify-btn {
+  display: none !important;
+  position: static !important;
+}
+
+/* =========================================================
+   LAYOUT
+========================================================= */
+
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--grid-16);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: clamp(32px, 8vw, 48px) clamp(24px, 6vw, 40px);
+  text-align: center;
+
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.auth-card h1 {
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 700;
+  margin-bottom: var(--grid-8);
+
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-card p {
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+  margin-bottom: clamp(32px, 8vw, 48px);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--input-gap);
+}
+
+.auth-form label {
+  text-align: left;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: var(--grid-16);
+}
+
+/* Reset global form styles ONLY for login */
+body.login-page .form-group input,
+body.login-page .form-group select,
+body.login-page .form-group textarea {
+  all: unset;
+}
+
+/* ================= INPUT ================= */
+
+body.login-page .auth-form input {
+  width: 100%;
+  min-height: var(--input-height);
+
+  padding:
+    var(--input-padding-y)
+    var(--input-padding-x)
+    var(--input-padding-y)
+    var(--input-padding-left);
+
+  border: var(--input-border-width) solid var(--glass-border);
+  border-radius: var(--input-radius);
+
+  background: var(--glass-bg);
+  background-clip: padding-box;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-size: var(--type-body);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text-primary);
+
+  box-sizing: border-box;
+
+  transition:
+    border-color 200ms var(--ease-modal),
+    box-shadow 200ms var(--ease-modal),
+    background 200ms var(--ease-modal);
+}
+
+body.login-page .auth-form input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+body.login-page .auth-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent),
+    0 12px 28px rgba(0, 0, 0, 0.2);
+
+  background: color-mix(in srgb, var(--glass-bg) 85%, white);
+}
+
+/* ================= BUTTON ================= */
+
+.auth-submit-btn {
+  width: 100%;
+  min-height: 48px;
+
+  padding: var(--grid-16) var(--grid-24);
+
+  background: var(--primary-gradient);
+  color: white;
+
+  border: none;
+  border-radius: var(--pill-radius);
+
+  font-size: var(--type-body);
+  font-weight: 700;
+
+  cursor: pointer;
+  transition:
+    transform 150ms var(--ease-modal),
+    box-shadow 150ms var(--ease-modal);
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+.auth-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: var(--grid-32) var(--grid-20);
+    margin: var(--grid-8);
+  }
+
+  .auth-form input,
+  .auth-submit-btn {
+    min-height: 44px;
+  }
+}

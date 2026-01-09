@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import ResponsiveContainer from './layout/ResponsiveContainer';
 
 const CreateCertificate = () => {
   const navigate = useNavigate();
@@ -40,147 +41,150 @@ const CreateCertificate = () => {
 
   if (result) {
     return (
-      <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '2rem', background: 'white', borderRadius: '12px', textAlign: 'center' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
-        <h2>Certificate Created Successfully!</h2>
-        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', margin: '1rem 0' }}>
-          <strong>Certificate ID:</strong> {result.certificateCode}
+      <ResponsiveContainer>
+        <div className="success-card">
+          <div className="success-header">
+            <div className="success-icon">✅</div>
+            <h3>Certificate Created Successfully!</h3>
+          </div>
+          <div className="success-content">
+            <div className="success-details">
+              <h4>Certificate Details</h4>
+              <p><strong>Certificate ID:</strong> {result.certificateCode}</p>
+            </div>
+          </div>
+          <p className="success-text">Redirecting to manage page...</p>
         </div>
-        <p>Redirecting to manage page...</p>
-      </div>
+      </ResponsiveContainer>
     );
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '2rem', background: 'white', borderRadius: '12px' }}>
-      <h1>📜 Create Single Certificate</h1>
-      <p style={{ color: '#6c757d', marginBottom: '2rem' }}>Manually create a certificate for an individual</p>
+    <ResponsiveContainer>
+      <div className="create-employee-header">
+        <h1>📜 Create Single Certificate</h1>
+        <p>Manually create a certificate for an individual</p>
+      </div>
       
-      <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Person UUID *</label>
-            <input
-              type="text"
-              name="person_uuid"
-              value={formData.person_uuid}
-              onChange={handleChange}
-              required
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }}
-              placeholder="Enter person UUID from ID system"
-            />
+      <div className="create-employee-form">
+        <form onSubmit={handleSubmit} className="professional-form">
+          <div className="form-section">
+            <div className="section-header">
+              <h3>📋 Certificate Information</h3>
+              <div className="section-line"></div>
+            </div>
+            
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Person UUID *</label>
+                <input
+                  type="text"
+                  name="person_uuid"
+                  value={formData.person_uuid}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter person UUID from ID system"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Full name"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Certificate Type *</label>
+                <select
+                  name="certificate_type"
+                  value={formData.certificate_type}
+                  onChange={handleChange}
+                >
+                  <option value="Internship">Internship</option>
+                  <option value="Employment">Employment</option>
+                  <option value="Training">Training</option>
+                  <option value="Achievement">Achievement</option>
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Domain</label>
+                <input
+                  type="text"
+                  name="domain"
+                  value={formData.domain}
+                  onChange={handleChange}
+                  placeholder="e.g., Web Development"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Technology</label>
+                <input
+                  type="text"
+                  name="technology"
+                  value={formData.technology}
+                  onChange={handleChange}
+                  placeholder="e.g., MERN Stack"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Mentor</label>
+                <input
+                  type="text"
+                  name="mentor"
+                  value={formData.mentor}
+                  onChange={handleChange}
+                  placeholder="Mentor name"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Issue Date</label>
+                <input
+                  type="date"
+                  name="issue_date"
+                  value={formData.issue_date}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
           </div>
           
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Name *</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Certificate Type *</label>
-            <select
-              name="certificate_type"
-              value={formData.certificate_type}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }}
+          <div className="form-actions">
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary submit-btn"
             >
-              <option value="Internship">Internship</option>
-              <option value="Employment">Employment</option>
-              <option value="Training">Training</option>
-              <option value="Achievement">Achievement</option>
-            </select>
+              {loading ? (
+                <>
+                  <span className="loading-spinner" />
+                  Creating...
+                </>
+              ) : (
+                'Create Certificate'
+              )}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => navigate('/certificates')}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
           </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Domain</label>
-            <input
-              type="text"
-              name="domain"
-              value={formData.domain}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }}
-              placeholder="e.g., Web Development"
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Technology</label>
-            <input
-              type="text"
-              name="technology"
-              value={formData.technology}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }}
-              placeholder="e.g., MERN Stack"
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Mentor</label>
-            <input
-              type="text"
-              name="mentor"
-              value={formData.mentor}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Issue Date</label>
-            <input
-              type="date"
-              name="issue_date"
-              value={formData.issue_date}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }}
-            />
-          </div>
-        </div>
-        
-        <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              flex: 1,
-              padding: '1rem',
-              background: loading ? '#6c757d' : '#667eea',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {loading ? 'Creating...' : 'Create Certificate'}
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => navigate('/certificates')}
-            style={{
-              padding: '1rem 2rem',
-              background: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </ResponsiveContainer>
   );
 };
 

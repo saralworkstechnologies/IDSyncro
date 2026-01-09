@@ -8,12 +8,17 @@ import VerifyID from './components/VerifyID';
 import BulkUpload from './components/BulkUpload';
 import Certificates from './components/Certificates';
 import OfferLetters from './components/OfferLetters';
+import MobileBottomNav from './components/MobileBottomNav';
+import MobileHeader from './components/MobileHeader';
 import PrivateRoute from './components/PrivateRoute';
 import Login from './components/Login';
+import ThemeToggle from './components/ThemeToggle';
 import { ToastProvider } from './components/Toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { buildVerifyPortalUrl } from './config';
 import './App.css';
+import './styles/id-card-viewer-new.css';
 
 function Navigation({ onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,17 +44,36 @@ function Navigation({ onLogout }) {
     closeMobileMenu();
   };
 
+  // Calculate active tab position for animation
+  const getActiveTabStyle = () => {
+    const paths = ['/', '/employees', '/certificates', '/offer-letters', '/verify'];
+    const activeIndex = paths.findIndex(path => 
+      path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
+    );
+    
+    if (activeIndex === -1) return { width: '0%', left: '0%' };
+    
+    const tabWidth = 100 / 6; // 6 items total (5 tabs + logout)
+    return {
+      width: `${tabWidth * 0.8}%`, // Make active background 80% of tab width
+      left: `${activeIndex * tabWidth + (tabWidth * 0.1)}%` // Center it within the tab
+    };
+  };
+
   return (
     <nav className="navbar">
       <Link to="/" className="nav-brand" onClick={closeMobileMenu}>
         <h2>SWID</h2>
       </Link>
       
-      <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-        {mobileMenuOpen ? '✕' : '☰'}
-      </button>
+      <div className="nav-controls">
+        <ThemeToggle />
+        <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+      </div>
       
-      <div className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+      <div className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`} style={{'--active-left': getActiveTabStyle().left, '--active-width': getActiveTabStyle().width}}>
         <Link to="/" className={isActive('/')} onClick={closeMobileMenu}>Dashboard</Link>
         <Link to="/employees" className={isActive('/employees')} onClick={closeMobileMenu}>Manage IDs</Link>
         <Link to="/certificates" className={isActive('/certificates')} onClick={closeMobileMenu}>Certificates</Link>
@@ -104,6 +128,8 @@ function AppContent() {
   return (
     <div className="App">
       {!isVerifyHost && isAuthenticated && <Navigation onLogout={logout} />}
+      {!isVerifyHost && isAuthenticated && <MobileHeader />}
+      {!isVerifyHost && isAuthenticated && <MobileBottomNav />}
 
       <main className="main-content">
         <Routes>
@@ -136,13 +162,15 @@ function AppContent() {
 
 function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </AuthProvider>
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

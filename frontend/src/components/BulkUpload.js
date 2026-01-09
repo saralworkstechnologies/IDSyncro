@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import ExcelJS from 'exceljs';
 import { useToast } from './Toast';
+import '../styles/bulk-upload.css';
 
 const BulkUpload = () => {
   const toast = useToast();
@@ -25,7 +26,13 @@ const BulkUpload = () => {
           if (rowNumber === 1) return;
           const rowData = {};
           worksheet.getRow(1).eachCell((headerCell, colNumber) => {
-            rowData[headerCell.value] = row.getCell(colNumber).value || '';
+            const cellValue = row.getCell(colNumber).value;
+            // Handle hyperlink objects and other complex cell values
+            if (cellValue && typeof cellValue === 'object' && cellValue.text) {
+              rowData[headerCell.value] = cellValue.text;
+            } else {
+              rowData[headerCell.value] = cellValue || '';
+            }
           });
           data.push(rowData);
         });
@@ -99,55 +106,44 @@ const BulkUpload = () => {
           if (rowNumber === 1) return;
           const rowData = {};
           worksheet.getRow(1).eachCell((headerCell, colNumber) => {
-            rowData[headerCell.value] = row.getCell(colNumber).value || '';
+            const cellValue = row.getCell(colNumber).value;
+            // Handle hyperlink objects and other complex cell values
+            if (cellValue && typeof cellValue === 'object' && cellValue.text) {
+              rowData[headerCell.value] = cellValue.text;
+            } else {
+              rowData[headerCell.value] = cellValue || '';
+            }
           });
           data.push(rowData);
         });
 
-        const uploadResults = {
-          success: 0,
-          failed: 0,
-          errors: []
-        };
+        // Prepare employee data for bulk creation
+        const employees = data.map(row => ({
+          name: row.Name || '',
+          type: row.Type?.toLowerCase() || 'employee',
+          department: row.Department || '',
+          designation: row.Designation || '',
+          employment_type: 'full_time',
+          work_location: row['Work Location'] || 'Head Office',
+          email: row.Email || '',
+          phone: row.Phone || '',
+          address: row.Address || '',
+          date_of_birth: row['Date of Birth'] || '',
+          joining_date: row['Joining Date'] || '',
+          manager: row.Manager || '',
+          blood_group: row['Blood Group'] || '',
+          emergency_contact: row['Emergency Contact'] || '',
+          emergency_phone: row['Emergency Phone'] || '',
+          salary: row.Salary || '',
+          bank_account: row['Bank Account'] || '',
+          aadhar_number: row['Aadhar Number'] || '',
+          pan_number: row['PAN Number'] || ''
+        }));
 
-        for (let i = 0; i < data.length; i++) {
-          const row = data[i];
-          try {
-            // Validate required fields
-            if (!row.Name || !row.Department || !row.Email) {
-              throw new Error('Missing required fields: Name, Department, or Email');
-            }
-            
-            const employeeData = {
-              name: row.Name,
-              type: row.Type?.toLowerCase() || 'employee',
-              department: row.Department,
-              designation: row.Designation || 'Employee',
-              employment_type: 'full_time',
-              work_location: row['Work Location'] || 'Head Office',
-              email: row.Email,
-              phone: row.Phone,
-              address: row.Address,
-              date_of_birth: row['Date of Birth'],
-              joining_date: row['Joining Date'],
-              manager: row.Manager,
-              blood_group: row['Blood Group'],
-              emergency_contact: row['Emergency Contact'],
-              emergency_phone: row['Emergency Phone'],
-              salary: row.Salary,
-              bank_account: row['Bank Account'],
-              aadhar_number: row['Aadhar Number'],
-              pan_number: row['PAN Number']
-            };
-
-            await axios.post('/api/employees', employeeData);
-            uploadResults.success++;
-          } catch (error) {
-            uploadResults.failed++;
-            uploadResults.errors.push(`Row ${i + 1} (${row.Name || 'Unknown'}): ${error.response?.data?.error || error.message}`);
-          }
-        }
-
+        // Use bulk creation endpoint (no validation)
+        const response = await axios.post('/api/employees/bulk-create', { employees });
+        
+        const uploadResults = response.data.results;
         setResults(uploadResults);
         
         if (uploadResults.success > 0) {
@@ -166,7 +162,7 @@ const BulkUpload = () => {
           fileInput.value = '';
         }
       } catch (error) {
-        toast.error('Error processing file: ' + error.message);
+        toast.error('Error processing file: ' + (error.response?.data?.error || error.message));
       } finally {
         setLoading(false);
       }
@@ -212,7 +208,7 @@ const BulkUpload = () => {
               Download Excel Template
             </button>
             <div className="template-info">
-              <span>💡 Template includes: Name, Department, Email, Phone, and all other required fields</span>
+              <span>💡 Template includes: Name, Department, Email, Phone, and all other fields (empty fields are allowed)</span>
             </div>
           </div>
         </div>

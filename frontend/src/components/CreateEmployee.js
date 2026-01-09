@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { validateField, formatInput, getPanPlaceholder } from '../utils/validation';
 import { useToast } from './Toast';
+import '../styles/forms.css';
 
 const CreateEmployee = () => {
   const toast = useToast();

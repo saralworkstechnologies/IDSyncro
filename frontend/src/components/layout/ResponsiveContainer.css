@@ -1,0 +1,44 @@
+/* ===== RESPONSIVE CONTAINER SYSTEM ===== */
+
+.responsive-container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--grid-16);
+}
+
+/* Mobile: 98% width */
+@media (max-width: 767px) {
+  .responsive-container {
+    width: 98%;
+    padding: 0 var(--grid-8);
+  }
+}
+
+/* Tablet/Desktop: 95% width, max 1200px */
+@media (min-width: 768px) {
+  .responsive-container {
+    width: 95%;
+    max-width: 1200px;
+    padding: 0 var(--grid-24);
+  }
+}
+
+/* Full-bleed container */
+.responsive-container-full {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding: 0 var(--grid-16);
+}
+
+@media (max-width: 767px) {
+  .responsive-container-full {
+    padding: 0 calc(2% / 2);
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-container-full {
+    padding: 0 calc(5% / 2);
+  }
+}

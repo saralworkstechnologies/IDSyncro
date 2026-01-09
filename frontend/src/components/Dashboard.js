@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import ResponsiveContainer from './layout/ResponsiveContainer';
 import { buildVerifyPortalUrl } from '../config';
 
 const Dashboard = () => {
@@ -30,7 +31,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div>
+    <ResponsiveContainer>
       <h1>Dashboard</h1>
       
       <div className="stats-grid">
@@ -50,7 +51,7 @@ const Dashboard = () => {
 
       <div className="card">
         <h2>Quick Actions</h2>
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }} className="flex-column-mobile">
           <Link to="/create" className="btn btn-primary">Create New ID</Link>
           <Link to="/employees" className="btn btn-secondary">Manage IDs</Link>
           <a
@@ -63,7 +64,7 @@ const Dashboard = () => {
           </a>
         </div>
       </div>
-    </div>
+    </ResponsiveContainer>
   );
 };
 

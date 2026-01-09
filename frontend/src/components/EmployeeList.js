@@ -4,6 +4,7 @@ import axios from 'axios';
 import IDCardViewer from './IDCardViewer';
 import { useToast } from './Toast';
 import { buildApiUrl, UPLOADS_BASE_URL, buildVerifyPortalUrl } from '../config';
+import '../styles/employee-list.css';
 
 // Load jsPDF
 if (typeof window !== 'undefined' && !window.jspdf) {
@@ -402,7 +403,7 @@ const EmployeeList = () => {
             <div className="employee-header-actions">
               <button 
                 onClick={handlePrintSelected}
-                className="btn btn-primary"
+                className="employee-action-btn primary"
                 disabled={selectedIds.length === 0}
               >
                 🖨️ Print Selected ({selectedIds.length})
@@ -412,14 +413,14 @@ const EmployeeList = () => {
             <div className="employee-header-actions">
               <button 
                 onClick={() => setShowTypeModal(true)}
-                className="btn btn-secondary"
+                className="employee-action-btn secondary"
                 disabled={selectedIds.length === 0}
               >
                 🔄 Change Type ({selectedIds.length})
               </button>
               <button 
                 onClick={() => setShowStatusModal(true)}
-                className="btn btn-primary"
+                className="employee-action-btn primary"
                 disabled={selectedIds.length === 0}
               >
                 🔄 Change Status ({selectedIds.length})
@@ -427,9 +428,9 @@ const EmployeeList = () => {
             </div>
           ) : (
             <div className="employee-header-actions">
-              <Link to="/create" className="btn btn-primary">Create New ID</Link>
-              <Link to="/bulk-upload" className="btn btn-secondary">📤 Bulk Upload</Link>
-              <Link to="/employees?print=true" className="btn btn-secondary">🖨️ Print ID Card</Link>
+              <Link to="/create" className="employee-action-btn primary">Create New ID</Link>
+              <Link to="/bulk-upload" className="employee-action-btn secondary">📤 Bulk Upload</Link>
+              <Link to="/employees?print=true" className="employee-action-btn secondary">🖨️ Print ID Card</Link>
             </div>
           )}
         </div>
@@ -724,7 +725,7 @@ const EmployeeList = () => {
                   e.stopPropagation();
                   setShowIdCard(employee);
                 }}
-                className="btn btn-primary card-btn"
+                className="card-btn"
               >
                 📎 View ID
               </button>
@@ -734,7 +735,7 @@ const EmployeeList = () => {
                     e.stopPropagation();
                     setSelectedEmployee(employee);
                   }}
-                  className="btn btn-secondary card-btn"
+                  className="card-btn"
                 >
                   📄 View Details
                 </button>
@@ -745,7 +746,7 @@ const EmployeeList = () => {
                     e.stopPropagation();
                     handlePrintSingle(employee);
                   }}
-                  className="btn btn-primary card-btn"
+                  className="card-btn"
                 >
                   🖨️ Print
                 </button>

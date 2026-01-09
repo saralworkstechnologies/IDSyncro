@@ -4,6 +4,7 @@ import axios from 'axios';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { buildVerifyPortalUrl } from '../config';
+import '../styles/dashboard.css';
 
 const ProfessionalDashboard = () => {
   const [stats, setStats] = useState({
@@ -238,7 +239,6 @@ const ProfessionalDashboard = () => {
         <button 
           onClick={() => exportByType('thisMonth')} 
           className="stat-card secondary"
-          style={{ border: 'none', background: 'white', cursor: 'pointer' }}
         >
           <div className="stat-icon">📅</div>
           <div className="stat-content">
